@@ -150,16 +150,19 @@ class Scraper:
         print("creo pagine")
 
 
-        self.driver.get(f"https://www.vinted.it/catalog?currency=EUR{input_search}")
+        gen_func.safe_get(self.driver,f"https://www.vinted.it/catalog?currency=EUR{input_search}")
+        # self.driver.get(f"https://www.vinted.it/catalog?currency=EUR{input_search}")
 
         print("dormo")
         time.sleep(5)
 
-        print("smetto di domrire")
+        print("smetto di dormire")
 
         order = "&order=" + dictionary["sort"]
-        price_from = "&price_from=" + dictionary["prezzoDa"]
-        price_to = "&price_to=" + dictionary["prezzoA"]
+
+        price_from = "" if dictionary["prezzoDa"] == " " else "&price_from=" + dictionary["prezzoDa"]
+
+        price_to = "" if dictionary["prezzoA"] == " " else "&price_to=" + dictionary["prezzoA"]
 
         color_list = dictionary["colore"].split("-")
         color_ids = f.find_color_ids(color_list)
@@ -174,8 +177,8 @@ class Scraper:
         for brand_id in brands_ids:
             brands_search = brands_search + "&brand_ids[]=" + brand_id
 
-        status = "&status_ids[]=" + dictionary["status"]
-        category = "&catalog[]=" + search.categories[dictionary["category"]]
+        status = "" if dictionary["status"] == " " else "&status_ids[]=" + dictionary["status"]
+        category = "" if dictionary["category"] == " " else "&catalog[]=" + search.categories[dictionary["category"]]
 
         webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{status}{brands_search}{category}"    
         return webpage
@@ -252,7 +255,7 @@ class Scraper:
     
 
     def scrape_single_product(self, url, data_id, dictionary):
-        product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/"
+        product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
         self.driver.get(url)
 
@@ -297,10 +300,11 @@ class Scraper:
         for index, image_url in enumerate(image_urls):
             # image_url = image.get_attribute("src")
             print(f"Image {index + 1}: {image_url}")
-            if not os.path.exists(f"{product_root_folder}{data_id}"):
-                folder_path = os.join({product_root_folder},{data_id})
+            folder_path = os.path.join(product_root_folder, dictionary["search"] + " images",str(data_id))
+            if not os.path.exists(folder_path):
+                # folder_path = os.path.join({product_root_folder},{data_id})
                 os.makedirs(folder_path)
-            gen_func.download_image(image_url, os.join(folder_path,{index}))
+            gen_func.download_image(image_url, os.path.join(folder_path,str(index)))
 
         if len(stars) >= 4 and reviews_count > 3:
             print("almeno 4 stelle e 3 reviews")
@@ -315,30 +319,33 @@ class Scraper:
         new_items["MarketStatus"] = "New"
 
         # removed_items = old_df[~old_df['Link'].isin(new_df['Link'])]
+        # mark sold items as sold
         old_df.loc[~old_df['Link'].isin(new_df['Link']), 'MarketStatus'] = 'Sold'
 
         # print(len(removed_items))
 
-        # Identifying removed items
-
         # Save new and removed items if any
         if not new_items.empty:
             old_df.append(new_df)
+            old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
             #new_items.to_excel(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/new_items {input_search}.xlsx", header=True, index=False)
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 
-            count = 0
-            for index, row in enumerate(new_df):
-                #send whatsapp messages
-                # notif.sendMessage(f"Item {count}: {row.iloc[0]} '  ' {row.iloc[4]}")
-                count += 1
-                #download images
-                data_id = row["dataid"]
-                img_link = row["Image"]
-                if(img_link != ""):
-                    gen_func.ensure_path_exists(f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images')
-                    gen_func.download_image(img_link, f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images/{data_id}')
+
+            #send message and download main image
+
+            # count = 0
+            # for index, row in enumerate(new_df):
+            #     #send whatsapp messages
+            #     # notif.sendMessage(f"Item {count}: {row.iloc[0]} '  ' {row.iloc[4]}")
+            #     count += 1
+            #     #download images
+            #     data_id = row["dataid"]
+            #     img_link = row["Image"]
+            #     if(img_link != ""):
+            #         gen_func.ensure_path_exists(f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images')
+            #         gen_func.download_image(img_link, f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images/{data_id}')
         else:
             print("non ci sono nuovi articoli")
             gen_func.empty_excel(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/new_items {input_search}.xlsx")

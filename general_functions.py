@@ -80,3 +80,16 @@ def load_page(driver, webpage, page):
             if retries == MAX_RETRIES:
                 print("Max retries reached, unable to load page.")
                 raise e  # Raise the exception after max retries
+
+
+import time
+
+def safe_get(driver, url, retries=3, delay=2):
+    for attempt in range(retries):
+        try:
+            driver.get(url)
+            return  # Exit if successful
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            time.sleep(delay)  # Wait before retrying
+    print("Failed to load the page after multiple attempts.")

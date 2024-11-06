@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 import time
 import re
 import requests
-
+import os
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -120,35 +120,44 @@ def main():
     #     print(response.status_code)
     # except Exception as e:
     #     print(f"Error: {e}")
-    scraper = Scraper.Scraper() 
-    scraper.scrape_single_product(url="https://www.vinted.it/items/3919311596-adidas-campus-00s-black-and-white-gum-j?referrer=catalog" ,data_id=3919311596, dictionary=
-                                  search.air_force_1)
 
-    # for i in range(5):
-    #     print(f"Round {i}")
-    #     for dictionary in search.programmed_searches:
-    #         print(f"search = {dictionary}")
-    #         input_search = dictionary["search"]
-    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/"
 
-    #         scraped_data = scraper.scrape_products(dictionary)
+    # scraper = Scraper.Scraper() 
+    # scraper.scrape_single_product(url="https://www.vinted.it/items/3919311596-adidas-campus-00s-black-and-white-gum-j?referrer=catalog" ,data_id=3919311596, dictionary=
+    #                               search.air_force_1)
 
-    #         old_df = pd.read_excel(f"{product_root_folder}{input_search}.xlsx")
 
-    #         new_df = pd.DataFrame(scraped_data)
+    new_scraper = Scraper.Scraper() 
 
-    #         if old_df.empty:
-    #             old_df = new_df.copy()
+    for i in range(5):
+        print(f"Round {i}")
+        for dictionary in search.programmed_searches:
+            print(f"search = {dictionary}")
+            input_search = dictionary["search"]
+            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
-    #         scraper.compare_and_save_df(new_df,old_df,input_search)
 
-    #         # Save the DataFrame to an Excel file
-    #         #4
-    #         excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
+            scraped_data = new_scraper.scrape_products(dictionary)
 
-    #         new_df.to_excel(excel_file_path, index=False)
-    #         print("Data exported to:", excel_file_path)
-    #         time.sleep(60)
+            new_df = pd.DataFrame(scraped_data)
+
+            #if it doesn't exists means that is the first search ever
+            if os.path.exists(f"{product_root_folder}{input_search}.csv"):
+                print("not first search i call compare and save")
+                old_df = pd.read_csv()
+                new_scraper.compare_and_save_df(new_df,old_df,input_search)
+            else:
+                old_df = new_df.copy()
+                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+                print("first search csv created")
+
+            # Save the DataFrame to an Excel file
+            #4
+            # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
+
+            #new_df.to_excel(excel_file_path, index=False)
+            print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
+            time.sleep(60)
 
     #     time.sleep(3600)
 
