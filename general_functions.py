@@ -49,8 +49,11 @@ def random_sleep(range_from, range_to):
 
 def download_image(image_url, path):
     response = requests.get(image_url)
-    with open(path, 'wb') as file:
-        file.write(response.content)
+    if not os.path.exists(path):
+        with open(path, 'wb') as file:
+            file.write(response.content)
+    else:
+        print("non scarico immagine esiste già")
 
    
 def split_data(entry):
@@ -84,12 +87,29 @@ def load_page(driver, webpage, page):
 
 import time
 
-def safe_get(driver, url, retries=3, delay=2):
+def safe_get(driver, url, retries=3, delay=15):
     for attempt in range(retries):
         try:
             driver.get(url)
             return  # Exit if successful
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
-            time.sleep(delay)  # Wait before retrying
+        
+        time.sleep(delay)  # Wait before retrying
     print("Failed to load the page after multiple attempts.")
+
+
+def download_all_images(image_urls, dictionary, data_id):
+    product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+    for index, image_url in enumerate(image_urls):
+        # image_url = image.get_attribute("src")
+        print(f"Image {index + 1}: {image_url}")
+        folder_path = os.path.join(product_root_folder, dictionary["search"] + " images",str(data_id))
+        if not os.path.exists(folder_path):
+            # print("path doesn't exists, i ll create")
+
+            # folder_path = os.path.join({product_root_folder},{data_id})
+            os.makedirs(folder_path)
+        # print("path exists i wont created it")
+        download_image(image_url, os.path.join(folder_path,str(index)))
+    return folder_path
