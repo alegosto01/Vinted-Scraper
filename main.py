@@ -128,36 +128,42 @@ def main():
 
 
     new_scraper = Scraper.Scraper() 
+    # df = pd.read_csv("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche.csv")
 
-    for i in range(5):
-        print(f"Round {i}")
-        for dictionary in search.programmed_searches:
-            print(f"search = {dictionary}")
-            input_search = dictionary["search"]
-            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+    # print(df["Images"])
+    new_scraper.complete_df_with_sigle_scrapes(search.air_force_1)
+
+    # for i in range(5):
+    #     print(f"Round {i}")
+    #     for dictionary in search.programmed_searches:
+    #         print(f"search = {dictionary}")
+    #         input_search = dictionary["search"]
+    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
 
-            scraped_data = new_scraper.scrape_products(dictionary)
+    #         scraped_data = new_scraper.scrape_products(dictionary)
 
-            new_df = pd.DataFrame(scraped_data)
+    #         new_df = pd.DataFrame(scraped_data)
 
-            #if it doesn't exists means that is the first search ever
-            if os.path.exists(f"{product_root_folder}{input_search}.csv"):
-                print("not first search i call compare and save")
-                old_df = pd.read_csv()
-                new_scraper.compare_and_save_df(new_df,old_df,input_search)
-            else:
-                old_df = new_df.copy()
-                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-                print("first search csv created")
+    #         #if it doesn't exists means that is the first search ever
+    #         if os.path.exists(f"{product_root_folder}{input_search}.csv"):
+    #             print("not first search i call compare and save")
+    #             old_df = pd.read_csv()
+    #             new_scraper.compare_and_save_df(new_df,old_df,input_search)
+    #         else:
+    #             old_df = new_df.copy()
+    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+    #             print("first search csv created")
 
-            # Save the DataFrame to an Excel file
-            #4
-            # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
+    #         # Save the DataFrame to an Excel file
+    #         #4
+    #         # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
 
-            #new_df.to_excel(excel_file_path, index=False)
-            print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
-            time.sleep(60)
+    #         #new_df.to_excel(excel_file_path, index=False)
+    #         print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
+
+
+    #         time.sleep(60)
 
     #     time.sleep(3600)
 
