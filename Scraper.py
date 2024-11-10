@@ -395,44 +395,62 @@ class Scraper:
         csv_path = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv"
         images_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images"
         
+        #read csv to modify it
         df = pd.read_csv(csv_path)
+
         print(f"len df = {len(df)}")
+        #initialize a list of new rows to add to the csv
         new_rows = []
+
+        #loop through the dataset to detect the row which are missing the info from the single product scrape
         for index, row in df.iterrows():  
+            #if images is empty means that the row doesn't have the complete info
+            #also check that the folder is not created already, if it is we can skip it
             if pd.isna(row["Images"]) and not os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images/{row['Dataid']}"):
                 self.driver = self.init_driver()
+
+                #get the extra data
                 new_row = self.scrape_single_product(str(row["Link"]), row["Dataid"], dictionary)
 
-                if new_row:
-                    row["Images"] = new_row["Images"]
 
-                    # Remove the images from the new_row becuase right above i populated the column "images" in the original df
+                if new_row:
+                    print(f"immagini da aggiungere {new_row['Images']}")
+                    #fill the images cell with the list of images just scraped
+                    df.at[index, "Images"] = list(new_row["Images"])
+
+                    # Remove the images from the new_row becauase right above i populated the column "images" in the original df
                     first_key = next(iter(new_row))
                     new_row.pop(first_key)
 
+                    #download and store all the images
                     image_folder_path = gen_func.download_all_images(row["Images"], dictionary, new_row["Dataid"])
                     
+                    #check the images to recognize if the item is what we want
                     is_item_right = dataset_cleaner.check_single_item_images(dictionary, image_folder_path)
-                else:
+                else: #if new_row is empty means that the page doeas exist anymore
                     is_item_right = False
 
+                #if the item is correct we store it otherwise we drop the whole row in the csv
                 if is_item_right:
                     new_rows.append(new_row)
                 else:
                     df.drop(index, inplace=True)  # Drop the row in the main DataFrame
             time.sleep(10)
 
+        #create a temporary df with the new rows
         columns = ["Interested_count", "View_count", "Item_description", "Upload_date", "Dataid"]
-        
         complementary_df = pd.DataFrame(new_rows, columns=columns)
 
+        #maybe this row can be removed
         df.reset_index(drop=True, inplace=True)  # This removes the old index
 
+        #add the temporary df witht he new rows to the original df
         new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
 
         # add all new images and info to items 
         # new_df = pd.merge(df, complementary_df, on="Dataid", how="left")
 
+        #overwrite the csv with the updated data
         new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
 
         

@@ -23,7 +23,7 @@ def remove_wrong_items(search):
 
 # remove_wrong_items(search.air_force_1)
 
-
+#check all the images of an item and evaluate to aproove it or not
 def check_single_item_images(dictionary, images_folder_path):
 
     correct = []
