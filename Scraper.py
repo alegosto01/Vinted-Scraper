@@ -247,7 +247,7 @@ class Scraper:
                 # Append the data to the list
                 data.append({
                     "Title": components[0],
-                    "Price": components[1],
+                    "Price": float(re.sub(r'[^\d.]', '', components[1].replace(',', '.'))), #remove non digits caracters and cast it to float
                     "Brand": components[2],
                     "Size": components[3],
                     "Link": link,
@@ -255,7 +255,7 @@ class Scraper:
                     "Dataid": data_id,
                     "MarketStatus": "On Sale",
                     "SearchDate": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    "Images": ""
+                    "Images": []
                 })
         return data
     
@@ -414,16 +414,19 @@ class Scraper:
 
 
                 if new_row:
-                    print(f"immagini da aggiungere {new_row['Images']}")
+
+                    #maybe this can removed
+                    df["Images"] = df["Images"].astype("object")
+
                     #fill the images cell with the list of images just scraped
-                    df.at[index, "Images"] = list(new_row["Images"])
+                    df.at[index, "Images"] = new_row["Images"]
 
                     # Remove the images from the new_row becauase right above i populated the column "images" in the original df
                     first_key = next(iter(new_row))
                     new_row.pop(first_key)
 
                     #download and store all the images
-                    image_folder_path = gen_func.download_all_images(row["Images"], dictionary, new_row["Dataid"])
+                    image_folder_path = gen_func.download_all_images(df.at[index, "Images"], dictionary, new_row["Dataid"])
                     
                     #check the images to recognize if the item is what we want
                     is_item_right = dataset_cleaner.check_single_item_images(dictionary, image_folder_path)
