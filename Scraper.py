@@ -22,7 +22,11 @@ import dataset_cleaner
 from seleniumwire import webdriver
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import NoSuchElementException
-
+import os
+import re
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 SCRAPEOPS_API_KEY = 'YOUR_API_KEY'
 from selenium.webdriver import Remote, ChromeOptions
@@ -33,80 +37,33 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 
 
-AUTH = 'brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy'
-SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
-username = "brd-customer-hl_c6889560-zone-web_unlocker1"
-password = "amqftay7z516"
-brightdata_proxy = f"http://{username}-web-unlocker:{password}@zproxy.lum-superproxy.io:22225"
+# AUTH = 'brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy'
+# SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
+SBR_WEBDRIVER = f'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225'
+
+# username = "brd-customer-hl_c6889560-zone-web_unlocker1"
+# password = "amqftay7z516"
+# brightdata_proxy = f"http://{username}-web-unlocker:{password}@zproxy.lum-superproxy.io:22225"
 
 
 # f"http://{username}:{password}@zproxy.lum-superproxy.io:22225"
 
-################# CODICE USATO PRIMA NEI TENTATIVI DI FAR FUNZIONARE BRIGHT DATA ##############À   
-# class Scraper:
-#     def __init__(self):
-#         # self.dictionary = dictionary
-#         self.driver = self.init_driver()
-#         # self.product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{self.dictionary['search']}/"
-        
-#     def init_driver(self):
-#         # Code to initialize Selenium WebDriver
-#         # options = Options()
-#         # options.add_argument("--log-level=3")  # Suppress logs by setting log level
-#         # options.add_argument("--disable-logging")
-#         # options.add_argument("--no-sandbox")
-#         # options.add_argument("--disable-gpu")
-#         # options.add_argument("--disable-dev-shm-usage")
-
-
-#         options = uc.ChromeOptions()
-#         options.add_argument(f'--proxy-server={brightdata_proxy}')
-
-#         # options.add_experimental_option("detach", True)
-#         # options.add_experimental_option("excludeSwitches", ["enable-logging"])
-        
-#         # options.binary_location = r'/home/ale/Downloads/chromedriver-linux64/chromedriver'   #change to your location
-#         #2
-#         # latestchromedriver = ChromeDriverManager().install()
-
-#         options.add_argument("--incognito")
-#         options.add_argument('--disable-popup-blocking')
-#         options.add_argument("--force-device-scale-factor=0.8")
-#         PATH = r'/home/ale/Downloads/chromedriver-linux64/chromedriver' #change also to your location
-#         # service = uc.chrome.service.Service(PATH)
-#         # driver = uc.Chrome(options=options, use_subprocess=False,selenium ,driver_executable_path=latestchromedriver)
-#         # driver.implicitly_wait(5)  # Wait for elements to load
-
-#         ## Send Request Using ScrapeOps Proxy
-
-
-#         print('Connecting to Scraping Browser...')
-#         sbr_connection = ChromiumRemoteConnection(brightdata_proxy, 'goog', 'chrome')
-#         driver = Remote(sbr_connection, options=ChromeOptions())
-#         driver.get('https://www.vinted.it')
-#         print("driver ready")
-#         return driver
-
-###################################
-
-
-# Define Bright Data Proxy Information
-username = "brd-customer-hl_c6889560-zone-web_unlocker1"
-password = "amqftay7z516"  # Replace with your password
-proxy_host = "zproxy.lum-superproxy.io"
-proxy_port = 22225
 
 # Proxy URL with authentication
-brightdata_proxy = f"http://{username}:{password}@{proxy_host}:{proxy_port}"
-
 class Scraper:
     def __init__(self):
         self.driver = self.init_driver()
         
     def init_driver(self):
+        extension_path = "/home/ale/Desktop/Vinted-Web-Scraper/proxy_auth_extension/proxy_auth_extension.zip"
 
-        # Initialize Chrome options
-        chrome_options = ChromeOptions()
+        proxy_options = {
+            'proxy':  {'http': 'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225',
+                    'https': 'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225'}
+        }
+
+        # Set up Chrome options with your preferences
+        chrome_options = Options()
         prefs = {
             "profile.managed_default_content_settings.images": 2,        # Disable images
             "profile.managed_default_content_settings.stylesheets": 2,   # Disable CSS
@@ -115,18 +72,20 @@ class Scraper:
             "profile.default_content_setting_values.notifications": 2,   # Block notifications
             "profile.default_content_setting_values.popups": 2,          # Block popups
             "profile.default_content_setting_values.geolocation": 2,     # Block location sharing
-            "profile.managed_default_content_settings.javascript": 1,    # Enable JS if necessary
+            "profile.managed_default_content_settings.javascript": 1,    # Enable JavaScript if necessary
         }
         chrome_options.add_experimental_option("prefs", prefs)
-        chrome_options.add_argument("--headless")  # Headless mode
-        chrome_options.add_argument("--window-size=375,667")  # Mobile viewport for reduced traffic
+        chrome_options.add_argument("--headless")  # Run in headless mode
+        chrome_options.add_argument("--window-size=375,667")  # Mobile viewport
 
+        # Initialize the WebDriver with Selenium Wire and Chrome options
         #try to set connection
         for attempt in range(3):
             try:
                 print('Connecting to Scraping Browser...')
-                sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')
-                driver = Remote(sbr_connection, options=ChromeOptions())
+                driver = webdriver.Chrome(seleniumwire_options=proxy_options, options=chrome_options)
+                # sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')
+                # driver = Remote(sbr_connection, options=ChromeOptions())
                 driver.set_page_load_timeout(120)  # Set timeout to 60 seconds
                 print('Connected! Navigating to https://www.vinted.it...')
                 driver.get('https://www.vinted.it')
@@ -140,51 +99,60 @@ class Scraper:
     # create the url setting all the filters of the search
     def create_webpage(self, dictionary): 
 
-        #setting the input search
-        input_search = str(dictionary["search"]).replace(" ","%20")
-        input_search = "&search_text=" + input_search
-        print("creo pagine")
+        # #setting the input search
+        # input_search = str(dictionary["search"]).replace(" ","%20")
+        # input_search = "&search_text=" + input_search
+        # print("creo pagine")
 
-        #get the page 
-        gen_func.safe_get(self.driver,f"https://www.vinted.it/catalog?currency=EUR{input_search}")
+        # #get the page 
+        # gen_func.safe_get(self.driver,f"https://www.vinted.it/catalog?currency=EUR{input_search}")
+        # try:
+        #     cookie = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
+        #     cookie.click()
+        # except:
+        #     pass
+        # # with open("output.txt", "w") as file:
+        # #     file.write(self.driver.page_source)
 
-        print("dormo")
-        time.sleep(5)
-        print("smetto di dormire")
+        # print("dormo")
+        # time.sleep(5)
+        # print("smetto di dormire")
 
-        #set sorting order
-        order = "&order=" + dictionary["sort"]
+        # #set sorting order
+        # order = "&order=" + dictionary["sort"]
 
-        #setting price fro and price to
-        price_from = "" if dictionary["prezzoDa"] == " " else "&price_from=" + dictionary["prezzoDa"]
-        price_to = "" if dictionary["prezzoA"] == " " else "&price_to=" + dictionary["prezzoA"]
+        # #setting price fro and price to
+        # price_from = "" if dictionary["prezzoDa"] == " " else "&price_from=" + dictionary["prezzoDa"]
+        # price_to = "" if dictionary["prezzoA"] == " " else "&price_to=" + dictionary["prezzoA"]
 
-        #set colors list
-        color_list = dictionary["colore"].split("-")
-        color_ids = f.find_color_ids(color_list)
-        color_search = ""
-        for color_id in color_ids:
-            color_search = color_search + "&color_ids[]=" + color_id
+        # #set colors list
+        # color_list = dictionary["colore"].split("-")
+        # color_ids = f.find_color_ids(color_list)
+        # color_search = ""
+        # for color_id in color_ids:
+        #     color_search = color_search + "&color_ids[]=" + color_id
 
-        #set brand list
-        brands_list = dictionary["brands"].split("-")
-        brands_ids = f.find_brand_ids(self.driver, brands_list)
-        brands_search = ""
-        for brand_id in brands_ids:
-            brands_search = brands_search + "&brand_ids[]=" + brand_id
+        # #set brand list
+        # brands_list = dictionary["brands"].split("-")
+        # brands_ids = f.find_brand_ids(self.driver, brands_list)
+        # brands_search = ""
+        # for brand_id in brands_ids:
+        #     brands_search = brands_search + "&brand_ids[]=" + brand_id
 
-        #set condition of the items
-        status = "" if dictionary["status"] == " " else "&status_ids[]=" + dictionary["status"]
+        # #set condition of the items
+        # status = "" if dictionary["status"] == " " else "&status_ids[]=" + dictionary["status"]
         
-        #set item's category
-        category = "" if dictionary["category"] == " " else "&catalog[]=" + search.categories[dictionary["category"]]
+        # #set item's category
+        # category = "" if dictionary["category"] == " " else "&catalog[]=" + search.categories[dictionary["category"]]
 
         #write the final webpage
-        webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{status}{brands_search}{category}"    
+        # webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{status}{brands_search}{category}"    
+        webpage = "https://www.vinted.it/catalog?search_text=adidas%20gazelle%20black%20and%20white&status_ids[]=1&color_ids[]=12&currency=EUR"
         return webpage
 
     #scrpe the catagol page and get the main info of the items
     def scrape_products(self, dictionary):
+
         #get input search
         input_search = dictionary["search"]
 
@@ -225,6 +193,8 @@ class Scraper:
 
             #find list of products in the page
             products = self.driver.find_elements(By.CLASS_NAME, "new-item-box__overlay")
+            
+            all_likes_counts = self.driver.find_elements(By.CLASS_NAME, "u-background-white.u-flexbox.u-align-items-center.new-item-box__favourite-icon")
 
             #if the page has 0 products mean that we can stop scraping
             if len(products) == 0:
@@ -244,6 +214,21 @@ class Scraper:
                 else:
                     data_id = data_id[1]
 
+                likes_count = 0
+
+                for element in all_likes_counts:
+                    # Retrieve the "data-testid" attribute
+                    data_test_id = element.get_attribute("data-testid")
+                    
+                    # Check if data_test_id contains the desired data_id
+                    if data_test_id and str(data_id) in data_test_id:
+                        # Retrieve the "aria-label" attribute and extract the likes count
+                        aria_label = element.get_attribute("aria-label")
+                        if aria_label:
+                            likes_count = int(aria_label.split(" ")[5])
+                            break  # Exit the loop once the element is found
+
+
                 # Append the data to the list
                 data.append({
                     "Title": components[0],
@@ -251,13 +236,15 @@ class Scraper:
                     "Brand": components[2],
                     "Size": components[3],
                     "Link": link,
+                    "Likes": likes_count,
                     # "Image": img_url,
                     "Dataid": data_id,
                     "MarketStatus": "On Sale",
                     "SearchDate": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     "Images": []
                 })
-        return data
+        return data       
+
     
     #scrape the specific web page of an item
     def scrape_single_product(self, url, data_id, dictionary):

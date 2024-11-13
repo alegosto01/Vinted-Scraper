@@ -1,10 +1,12 @@
 import asyncio
-from selenium import webdriver
+# from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 import re
 import requests
 import os
+from datetime import datetime
+
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -24,7 +26,11 @@ import Scraper
 import conversations as conv
 import searches as search
 from selenium.webdriver.chrome.options import Options
-
+import urllib.request
+import os
+import re
+import requests
+from bs4 import BeautifulSoup
 # #translate_specs non serve più
 # def translate_specs(dictionary, driver):
 #     for key in dictionary:
@@ -61,115 +67,63 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
 from selenium.webdriver.common.by import By
-
+from urllib.request import build_opener, ProxyHandler, Request
+from urllib.error import HTTPError, URLError
+from bs4 import BeautifulSoup
 import sys
 import ssl
+from seleniumwire import webdriver
 
 from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
 
-SBR_WEBDRIVER = 'https://brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy@brd.superproxy.io:9515'
 
 
 def main():
 
 
-# SBR_WEBDRIVER = f'https://brd-customer-hl_c6889560-zone-scraping_browser1:11@brd.superproxy.io:9515'
 
-# def main():
-
-#         #!/usr/bin/env python
-#     print('If you get error "ImportError: No module named \'six\'" install six:\n'+\
-#         '$ sudo pip install six');
-#     print('To enable your free eval account and get CUSTOMER, YOURZONE and ' + \
-#         'YOURPASS, please contact sales@brightdata.com')
-
-#     ssl._create_default_https_context = ssl._create_unverified_context
-#     if sys.version_info[0]==2:
-#         import six
-#         from six.moves.urllib import request
-#         opener = request.build_opener(
-#             request.ProxyHandler(
-#                 {'http': 'http://brd-customer-hl_c6889560-zone-web_unlocker1:amqftay7z516@brd.superproxy.io:22225',
-#                 'https': 'http://brd-customer-hl_c6889560-zone-web_unlocker1:amqftay7z516@brd.superproxy.io:22225'}))
-#         print(opener.open('https://www.vinted.it').read())
-#     if sys.version_info[0]==3:
-#         import urllib.request
-#         opener = urllib.request.build_opener(
-#             urllib.request.ProxyHandler(
-#                 {'http': 'http://brd-customer-hl_c6889560-zone-web_unlocker1:amqftay7z516@brd.superproxy.io:22225',
-#                 'https': 'http://brd-customer-hl_c6889560-zone-web_unlocker1:amqftay7z516@brd.superproxy.io:22225'}))
-#         print(opener.open('https://www.vinted.it').read())
-
-    # username = "brd-customer-hl_c6889560-zone-web_unlocker1"
-    # password = "amqftay7z516"  # Replace with your password
-    # proxy_host = "zproxy.lum-superproxy.io"
-    # proxy_port = 22225
-    # # proxy = {
-    # #     'http': f'http://{username}:{password}@{proxy_host}:{proxy_port}',
-    # #     'https': f'http://{username}:{password}@{proxy_host}:{proxy_port}'
-    # # }
-    # proxy = {
-    #      'http': 'http://localhost:24000',
-    #      'https': 'http://localhost:24000'
-    # }   
-
-
-    # try:
-    #     response = requests.get('https://www.vinted.it', proxies=proxy)
-    #     print(response.status_code)
-    # except Exception as e:
-    #     print(f"Error: {e}")
-
-
-    # scraper = Scraper.Scraper() 
-    # scraper.scrape_single_product(url="https://www.vinted.it/items/3919311596-adidas-campus-00s-black-and-white-gum-j?referrer=catalog" ,data_id=3919311596, dictionary=
-    #                               search.air_force_1)
+    # scraper = Scraper.Scraper()
 
 
     new_scraper = Scraper.Scraper() 
-    # df = pd.read_csv("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche.csv")
-
-    # print(df["Images"])
-    new_scraper.complete_df_with_sigle_scrapes(search.air_force_1)
-
-    # for i in range(5):
-    #     print(f"Round {i}")
-    #     for dictionary in search.programmed_searches:
-    #         print(f"search = {dictionary}")
-    #         input_search = dictionary["search"]
-    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+    # new_scraper.complete_df_with_sigle_scrapes(search.air_force_1)
 
 
-    #         scraped_data = new_scraper.scrape_products(dictionary)
 
-    #         new_df = pd.DataFrame(scraped_data)
-
-    #         #if it doesn't exists means that is the first search ever
-    #         if os.path.exists(f"{product_root_folder}{input_search}.csv"):
-    #             print("not first search i call compare and save")
-    #             old_df = pd.read_csv()
-    #             new_scraper.compare_and_save_df(new_df,old_df,input_search)
-    #         else:
-    #             old_df = new_df.copy()
-    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-    #             print("first search csv created")
-
-    #         # Save the DataFrame to an Excel file
-    #         #4
-    #         # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
-
-    #         #new_df.to_excel(excel_file_path, index=False)
-    #         print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
+    for i in range(1):
+        print(f"Round {i}")
+        for dictionary in search.programmed_searches:
+            print(f"search = {dictionary}")
+            input_search = dictionary["search"]
+            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
 
-    #         time.sleep(60)
+            scraped_data = new_scraper.scrape_products(dictionary)
+
+            new_df = pd.DataFrame(scraped_data)
+
+            #if it doesn't exists means that is the first search ever
+            if os.path.exists(f"{product_root_folder}{input_search}.csv"):
+                print("not first search i call compare and save")
+                old_df = pd.read_csv()
+                new_scraper.compare_and_save_df(new_df,old_df,input_search)
+            else:
+                old_df = new_df.copy()
+                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+                print("first search csv created")
+
+            # Save the DataFrame to an Excel file
+            #4
+            # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
+
+            #new_df.to_excel(excel_file_path, index=False)
+            print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
+
+
+            time.sleep(60)
 
     #     time.sleep(3600)
-
-
-
-
 
 
 
