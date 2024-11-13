@@ -105,24 +105,31 @@ def sort_items(driver, sorting):
 def click_color_list_menu(driver):
     #click color list menu
     color_menu_button = driver.find_element(By.CSS_SELECTOR, "[data-testid='catalog--color-filter--trigger']") 
+   
+    driver.execute_script("arguments[0].scrollIntoView();", color_menu_button)
     driver.execute_script("arguments[0].click();", color_menu_button)
 
 def click_sort_list_menu(driver):
     #click color list menu
     sort_menu_button = driver.find_element(By.CSS_SELECTOR, "[data-testid='catalog--sort-filter--trigger']") 
+    driver.execute_script("arguments[0].scrollIntoView();", sort_menu_button)
     driver.execute_script("arguments[0].click();", sort_menu_button)
 
 
 def click_brand_list_menu(driver):
-    #click color list menu
-    color_menu_button = driver.find_element(By.CSS_SELECTOR, "[data-testid='catalog--brand-filter--trigger']") 
-    driver.execute_script("arguments[0].click();", color_menu_button)
+    #click color list menu"
+    # brand_menu_button = driver.find_element(By.XPATH, "//button[class='web_ui__Chip__chip web_ui__Chip__outlined']") 
+    # print(brand_menu_button)
+    brand_menu_button = driver.find_element(By.XPATH, "//button[data-testid='catalog--brand-filter--trigger']") 
+    driver.execute_script("arguments[0].scrollIntoView();", brand_menu_button)
+    driver.execute_script("arguments[0].click();", brand_menu_button)
 
 def click_price_menu(driver):
     #click color list menu
     print("clickckckckck")
 
     price_menu_button = driver.find_element(By.XPATH, "//button[@data-testid='catalog--price-filter--trigger']")
+    driver.execute_script("arguments[0].scrollIntoView();", price_menu_button)
     driver.execute_script("arguments[0].click();", price_menu_button)
 
 
