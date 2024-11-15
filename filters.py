@@ -104,7 +104,7 @@ def sort_items(driver, sorting):
 ########## clicking  menus below ##################
 def click_color_list_menu(driver):
     #click color list menu
-    color_menu_button = driver.find_element(By.CSS_SELECTOR, "[data-testid='catalog--color-filter--trigger']") 
+    color_menu_button = driver.find_element(By.XPATH, "//button[@data-testid='catalog--color-filter--trigger']") 
    
     driver.execute_script("arguments[0].scrollIntoView();", color_menu_button)
     driver.execute_script("arguments[0].click();", color_menu_button)
