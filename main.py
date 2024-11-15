@@ -72,56 +72,79 @@ from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
 import sys
 import ssl
-from seleniumwire import webdriver
 
+from seleniumwire import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
+from selenium.webdriver.common.proxy import Proxy, ProxyType
+import sys
+import requests
+import filters
+# SBR_WEBDRIVER = f'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225'
 
+AUTH = 'brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy'
+SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 
 
 def main():
 
+    scraper = Scraper.Scraper()
+
+    scraper.driver = scraper.init_driver()
+
+    scraper.driver.get("https://www.vinted.it/catalog?time=1731674543&catalog_from=0&page=1")
+
+    time.sleep(10)
+
+    filters.click_color_list_menu(scraper.driver)
+
+    element_list = scraper.driver.find_elements(By.XPATH, "//div[@class='web_ui__Cell__cell web_ui__Cell__default web_ui__Cell__navigating']")
+
+    color_dictionary = {}
+    for element in element_list:
+        print(element)
+        try:
+            color = element.find_element(By.XPATH, "//.span[@class='web_ui__Text__text web_ui__Text__title web_ui__Text__left']").text
+            color_id = int(element.get_attribute("id").split("-")[-1])
+            color_dictionary[color] = color_id
+        except:
+            pass
+
+    
+    print(color_dictionary)
+
+    # for i in range(1):
+    #     print(f"Round {i}")
+    #     for dictionary in search.programmed_searches:
+    #         print(f"search = {dictionary}")
+    #         input_search = dictionary["search"]
+    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+
+    #         scraped_data = scraper.scrape_products(dictionary)
+
+    #         new_df = pd.DataFrame(scraped_data)
+
+    #         #if it doesn't exists means that is the first search ever
+    #         if os.path.exists(f"{product_root_folder}{input_search}.csv"):
+    #             print("not first search i call compare and save")
+    #             old_df = pd.read_csv()
+    #             scraper.compare_and_save_df(new_df,old_df,input_search)
+    #         else:
+    #             old_df = new_df.copy()
+    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+    #             print("first search csv created")
+
+    #         # Save the DataFrame to an Excel file
+    #         #4
+    #         # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
+
+    #         #new_df.to_excel(excel_file_path, index=False)
+    #         print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
 
 
-    # scraper = Scraper.Scraper()
-
-
-    new_scraper = Scraper.Scraper() 
-    # new_scraper.complete_df_with_sigle_scrapes(search.air_force_1)
-
-
-
-    for i in range(1):
-        print(f"Round {i}")
-        for dictionary in search.programmed_searches:
-            print(f"search = {dictionary}")
-            input_search = dictionary["search"]
-            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
-
-
-            scraped_data = new_scraper.scrape_products(dictionary)
-
-            new_df = pd.DataFrame(scraped_data)
-
-            #if it doesn't exists means that is the first search ever
-            if os.path.exists(f"{product_root_folder}{input_search}.csv"):
-                print("not first search i call compare and save")
-                old_df = pd.read_csv()
-                new_scraper.compare_and_save_df(new_df,old_df,input_search)
-            else:
-                old_df = new_df.copy()
-                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-                print("first search csv created")
-
-            # Save the DataFrame to an Excel file
-            #4
-            # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
-
-            #new_df.to_excel(excel_file_path, index=False)
-            print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
-
-
-            time.sleep(60)
+    #         time.sleep(60)
 
     #     time.sleep(3600)
 
@@ -153,4 +176,52 @@ if __name__ == '__main__':
 
 
 #stop from quitting the page    
-input("Press Enter to close the browser manually...")
+
+
+# def main():
+#     # scraper = Scraper.Scraper()
+
+
+#     proxy_options = {
+#         'proxy': {
+#             'http': 'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225',
+#             'https': 'https://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225',
+#             'no_proxy': 'localhost,127.0.0.1'
+#         }
+#     }
+
+#     # Configure Chrome options
+#     chrome_options = webdriver.ChromeOptions()
+#     chrome_options.add_argument("--headless")  # Optional: Run in headless mode if needed
+#     chrome_options.add_argument("--window-size=1200,800")
+#     custom_caps = {
+#         'acceptInsecureCerts': True  # Example capability
+#     }
+#     chrome_options.add_experimental_option("prefs", custom_caps)
+
+#     # Initialize Selenium Wire’s WebDriver with remote WebDriver settings
+#     driver = webdriver.Remote(
+#         command_executor="http://localhost:4444/wd/hub",  # Connect to the remote Selenium server
+#         options=chrome_options,
+#         seleniumwire_options=proxy_options  # Pass proxy settings to Selenium Wire
+#     )
+
+#     try:
+#         # Navigate to the page
+#         print("Connecting to Vinted...")
+#         driver.get("https://www.vinted.it/catalog?search_text=adidas%20gazelle%20black%20and%20white&status_ids[]=1&color_ids[]=12&currency=EUR&time=1731535560")
+#         print("Page loaded")
+
+#         # Wait for the element to be available
+#         brand_menu_button = WebDriverWait(driver, 10).until(
+#             EC.presence_of_element_located((By.XPATH, "//h1[@class='web_ui__Text__text web_ui__Text__heading web_ui__Text__left']"))
+#         )
+#         if brand_menu_button:
+#             print("Element found:", brand_menu_button)
+
+#     except Exception as e:
+#         print("Error occurred:", e)
+
+#     finally:
+#         driver.quit()
+#         print("Browser closed.")
