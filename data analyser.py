@@ -2,11 +2,11 @@ import pandas as pd
 import re
 import matplotlib.pyplot as plt
 import os
-
+import searches as src
 class DataAnalyzer:
     def __init__(self, dictionary, base_dir="/home/ale/Desktop/Vinted-Web-Scraper"):
         # Construct the file path dynamically based on the provided search term and base directory
-        self.file_path = os.path.join(base_dir, dictionary["search"], f"{dictionary["search"]}.csv")
+        self.file_path = os.path.join(base_dir, dictionary["search"], f"{dictionary['search']}.csv")
         self.data = None
 
     def load_data(self):
@@ -79,6 +79,13 @@ class DataAnalyzer:
         print(size_demand.sort_values(by=['Interested_count', 'View_count'], ascending=False))
 
 
+data_analyzer = DataAnalyzer(src.cucinelli)
+data_analyzer.load_data()
+data_analyzer.price_trend_analysis()
+data_analyzer.interest_price_analysis()
+data_analyzer.demand_based_deal_identification()
+data_analyzer.slow_moving_items_analysis()
+data_analyzer.size_analysis()
 # # Function to convert different time units to days
 # def convert_to_days(duration_str):
 #     match = re.search(r'(\d+)\s*(day|week|month)', duration_str, re.IGNORECASE)

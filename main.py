@@ -89,59 +89,33 @@ SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 
 
 def main():
+    # scraper = Scraper.Scraper()
+    # scraper.get_page_content("https://www.vinted.it/")
 
-    scraper = Scraper.Scraper()
+    for i in range(1):
+        print(f"Round {i}")
+        for dictionary in search.programmed_searches:
+                
+                scraper = Scraper.Scraper()
+                print(f"search = {dictionary}")
+                input_search = dictionary["search"]
+                product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
-    scraper.driver = scraper.init_driver()
+                scraped_data = scraper.scrape_products(dictionary)
+                columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+       'MarketStatus', 'SearchDate', 'Images']
+                new_df = pd.DataFrame(scraped_data, columns=columns)
 
-    scraper.driver.get("https://www.vinted.it/catalog?time=1731674543&catalog_from=0&page=1")
-
-    time.sleep(10)
-
-    filters.click_color_list_menu(scraper.driver)
-
-    element_list = scraper.driver.find_elements(By.XPATH, "//div[@class='web_ui__Cell__cell web_ui__Cell__default web_ui__Cell__navigating']")
-
-    color_dictionary = {}
-    for element in element_list:
-        print(element)
-        try:
-            color = element.find_element(By.XPATH, "//.span[@class='web_ui__Text__text web_ui__Text__title web_ui__Text__left']").text
-            color_id = int(element.get_attribute("id").split("-")[-1])
-            color_dictionary[color] = color_id
-        except:
-            pass
-
-    
-    print(color_dictionary)
-
-    # for i in range(1):
-    #     print(f"Round {i}")
-    #     for dictionary in search.programmed_searches:
-    #         print(f"search = {dictionary}")
-    #         input_search = dictionary["search"]
-    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
-
-    #         scraped_data = scraper.scrape_products(dictionary)
-
-    #         new_df = pd.DataFrame(scraped_data)
-
-    #         #if it doesn't exists means that is the first search ever
-    #         if os.path.exists(f"{product_root_folder}{input_search}.csv"):
-    #             print("not first search i call compare and save")
-    #             old_df = pd.read_csv()
-    #             scraper.compare_and_save_df(new_df,old_df,input_search)
-    #         else:
-    #             old_df = new_df.copy()
-    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-    #             print("first search csv created")
-
-    #         # Save the DataFrame to an Excel file
-    #         #4
-    #         # excel_file_path = f"{product_root_folder}{input_search}.xlsx" #zmiana lokacji zapisu pliku
-
-    #         #new_df.to_excel(excel_file_path, index=False)
-    #         print("Data exported to:", os.path.join(product_root_folder, input_search), ".csv")
+                #if it doesn't exists means that is the first search ever
+                if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
+                    print("not first search i call compare and save")
+                    old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+                    scraper.compare_and_save_df(new_df,old_df,input_search)
+                else:
+                    old_df = new_df.copy()
+                    # old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+                    old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+                    print("first search csv created")
 
 
     #         time.sleep(60)

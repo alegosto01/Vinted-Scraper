@@ -10,6 +10,8 @@ import pyautogui
 import pandas as pd
 from selenium.webdriver.common.action_chains import ActionChains
 import searches as search
+import csv
+import os
 
 
 
@@ -50,6 +52,7 @@ def select_black(driver):
 def find_brand_ids(driver, filters):
     click_brand_list_menu(driver)
     brand_ids = []
+    brand_to_add = []
     for filter in filters:
         try:
             parent_element = driver.find_elements(By.XPATH, f"//span[contains(text(), '{filter}')]/ancestor::div[contains(@class, 'web_ui__Cell__content')]")
@@ -61,8 +64,21 @@ def find_brand_ids(driver, filters):
                     parent_parent = element.find_element(By.XPATH, "./ancestor::div[contains(@class, 'web_ui__Cell__cell web_ui__Cell__default web_ui__Cell__navigating')]")
                     brand_id = parent_parent.get_attribute("id").split("-")[-1]
                     brand_ids.append(brand_id)
+
+                    new_brand_row = [filter, brand_id]
+                    brand_to_add.append(new_brand_row)
         except:
             print("the try failed.")
+
+    #save the new brands
+    temp_df = pd.DataFrame(brand_to_add, columns=["Brand", "Brand_id"])
+    
+    if not os.path.exists('brand_ids.csv'):
+        temp_df.to_csv('brand_ids.csv', index=False)
+    else:
+        brand_df = pd.read_csv('brand_ids.csv')
+        new_brand_df = pd.concat([brand_df, temp_df], ignore_index=True)
+        new_brand_df.to_csv('brand_ids.csv', index=False)
     return brand_ids
 
 
@@ -120,7 +136,7 @@ def click_brand_list_menu(driver):
     #click color list menu"
     # brand_menu_button = driver.find_element(By.XPATH, "//button[class='web_ui__Chip__chip web_ui__Chip__outlined']") 
     # print(brand_menu_button)
-    brand_menu_button = driver.find_element(By.XPATH, "//button[data-testid='catalog--brand-filter--trigger']") 
+    brand_menu_button = driver.find_element(By.XPATH, "//button[@data-testid='catalog--brand-filter--trigger']") 
     driver.execute_script("arguments[0].scrollIntoView();", brand_menu_button)
     driver.execute_script("arguments[0].click();", brand_menu_button)
 

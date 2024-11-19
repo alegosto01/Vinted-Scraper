@@ -18,7 +18,9 @@ from requests_html import HTMLSession
 
 from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
-
+import csv
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 
 #scraping browser proxy
@@ -30,7 +32,7 @@ SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 
 
 #0ce4bdf2c54deb5096b627b4fba5ae18289f93c488150a496190eeb7c6aec936 # api token sivede in web_unlocker 
-
+#0ce4bdf2c54deb5096b627b4fba5ae18289f93c488150a496190eeb7c6aec936
 #b400c1d0-9386-4d0f-b2a6-84dd19356b0c # api token non si vede più
 
 api_token = os.getenv("API_TOKEN")
@@ -66,8 +68,8 @@ class Scraper:
                 sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, 'goog', 'chrome')
                 driver = Remote(sbr_connection, options=ChromeOptions())
                 driver.set_page_load_timeout(120)  # Set timeout to 60 seconds
-                print('Connected! Navigating to https://www.vinted.it...')
-                driver.get('https://www.vinted.it')
+                # print('Connected! Navigating to https://www.vinted.it...')
+                # driver.get('https://www.vinted.it')
                 print("fatto")
                 return driver
             except Exception as e:
@@ -80,63 +82,46 @@ class Scraper:
 
         success = False
         attempts = 0
+    
+        session = HTMLSession()
+        retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        payload = {
+            "zone": "web_unlocker1",             
+            "url": url,    # Target URL
+            "format": "html",                 # Raw HTML format
+            "method": "GET",                 # Use the GET method
+            "country": "IT"                  # Use a US-based proxy
+        }
+        headers = {
+            "Authorization": api_token,  # Replace with your actual API token
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.90 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.google.com/"  # or another referring URL if needed
+        }
+
+        response = session.post(url, json=payload, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            # Parse the HTML content from the response
+            html = response.html
+            # Optionally render JavaScript if the content is dynamically loaded
+            html.render(sleep=7)  # Adjust sleep if needed to allow content to load   
+            if html:
+                success = True    
+                return html
+        else:
+            print("Failed to retrieve the page:", response.status_code)
+            print("Response message:", response.text)
         
-        while success == False and attempts < 5:
-            session = HTMLSession()
-
-            payload = {
-                "zone": "web_unlocker1",             
-                "url": url,    # Target URL
-                "format": "html",                 # Raw HTML format
-                "method": "GET",                 # Use the GET method
-                "country": "IT"                  # Use a US-based proxy
-            }
-            headers = {
-                "Authorization": api_token,  # Replace with your actual API token
-                "Content-Type": "application/json",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.90 Safari/537.36",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Referer": "https://www.google.com/"  # or another referring URL if needed
-            }
-            response = session.post(url, json=payload, headers=headers)
-
-
-            if response.status_code == 200:
-                # Parse the HTML content from the response
-                html = response.html
-                # Optionally render JavaScript if the content is dynamically loaded
-                html.render(sleep=1)  # Adjust sleep if needed to allow content to load   
-                if html:
-                    success = True    
-                    return html
-            else:
-                print("Failed to retrieve the page:", response.status_code)
-                print("Response message:", response.text)
-            
     # create the url setting all the filters of the search
     def create_webpage(self, dictionary): 
-
-        self.driver = self.init_driver(self)
-
-        #setting the input search
         input_search = str(dictionary["search"]).replace(" ","%20")
         input_search = "&search_text=" + input_search
-        print("creo pagine")
-
-        #get the page 
-        gen_func.safe_get(self.driver,f"https://www.vinted.it/catalog?currency=EUR{input_search}")
-        try:
-            cookie = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
-            cookie.click()
-        except:
-            pass
-        # with open("output.txt", "w") as file:
-        #     file.write(self.driver.page_source)
-
-        print("dormo")
-        time.sleep(5)
-        print("smetto di dormire")
-
         #set sorting order
         order = "&order=" + dictionary["sort"]
 
@@ -145,18 +130,59 @@ class Scraper:
         price_to = "" if dictionary["prezzoA"] == " " else "&price_to=" + dictionary["prezzoA"]
 
         #set colors list
-        color_list = dictionary["colore"].split("-")
-        color_ids = f.find_color_ids(color_list)
         color_search = ""
-        for color_id in color_ids:
-            color_search = color_search + "&color_ids[]=" + color_id
+        if dictionary["colore"] != " ":
+            color_list = dictionary["colore"].split("-")
+            color_ids = f.find_color_ids(color_list)
+            for color_id in color_ids:
+                color_search = color_search + "&color_ids[]=" + color_id
 
         #set brand list
-        brands_list = dictionary["brands"].split("-")
-        brands_ids = f.find_brand_ids(self.driver, brands_list)
         brands_search = ""
-        for brand_id in brands_ids:
-            brands_search = brands_search + "&brand_ids[]=" + brand_id
+
+        if dictionary["brands"] != " ":
+            brands_list = dictionary["brands"].split("-")
+            brands_ids = []
+            non_saved_brands = []
+
+            brands_df = pd.read_csv("brand_ids.csv")
+            # brand_dict = dict(zip(brands_df['brand'], brands_df['brand_id']))
+
+            for brand in brands_list:
+                #if i don't already have the brand saved is search it
+                if brand not in brands_df["Brand"].values:
+                    non_saved_brands.append(brand)
+                else: #if i have it i just take it
+                    brands_ids.append(brands_df.loc[brands_df['Brand'] == brand, 'Brand_id'].iloc[0])
+                
+            if non_saved_brands:
+                        #setting the input search
+
+                print("creo pagine")
+                
+                self.driver = self.init_driver()
+
+                #get the page 
+                gen_func.safe_get(self.driver,f"https://www.vinted.it/catalog?currency=EUR{input_search}")
+                try:
+                    cookie = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
+                    cookie.click()
+                except:
+                    pass
+                # with open("output.txt", "w") as file:
+                #     file.write(self.driver.page_source)
+
+                print("dormo")
+                time.sleep(5)
+                print("smetto di dormire")
+
+                print("brand non salvati ancora, li cerco")
+                brands_ids.extend(f.find_brand_ids(self.driver, non_saved_brands))
+                self.driver.quit()
+
+            for brand_id in brands_ids:
+                print(brand_id)
+                brands_search = brands_search + "&brand_ids[]=" + str(brand_id)
 
         #set condition of the items
         status = "" if dictionary["status"] == " " else "&status_ids[]=" + dictionary["status"]
@@ -164,7 +190,9 @@ class Scraper:
         #set item's category
         category = "" if dictionary["category"] == " " else "&catalog[]=" + search.categories[dictionary["category"]]
 
-        #write the final webpage
+
+
+
         webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{status}{brands_search}{category}"    
         # webpage = "https://www.vinted.it/catalog?search_text=adidas%20gazelle%20black%20and%20white&status_ids[]=1&color_ids[]=12&currency=EUR"
         return webpage
@@ -189,13 +217,37 @@ class Scraper:
         last_page = False
 
         #loop through all the pages available
-        for page in range(10000):
-            
-            webpage = webpage + str(page+1)
+        page = 0
 
-            html_content = self.get_page_content(webpage)
-                        
+        for i in range(10000):
+            new_webpage = webpage + "&page=" + str(page+1)
+            print(f"im searching in {new_webpage}")
+
+            html_content = self.get_page_content(new_webpage)
+
+            try:
+                element = html_content.find('meta[content="Una community, migliaia di brand e tantissimo stile second-hand. Ti va di iniziare? Ecco come funziona."]', first=True)
+            except:
+                continue
+                
+
+
+            # if total_n_items == -1:
+            #     total_n_items_element = html_content.find("div[class='u-ui-padding-vertical-medium u-flexbox u-justify-content-between u-align-items-center']", first=True)
+            #     for element in total_n_items_element.find("div[class='web_ui__Text__text web_ui__Text__subtitle web_ui__Text__left']"):
+            #         print(f"element text = {element.text}")
+            #         if "risultati." in element.text:
+            #             print("found")
+            #             total_n_items = int(element.text[0])
+            
             time.sleep(5)
+            # try:
+            #     no_item_found_element = html_content.find("h1[data-testid='search-empty-state--title']")
+            #     print(no_item_found_element)
+            #     if no_item_found_element:
+            #         last_page = True
+            # except:
+            #     pass
 
             # #if is the first access accept the cookies
             # try:
@@ -207,6 +259,7 @@ class Scraper:
 
             #if the previous page was empty then stop
             if last_page:
+                # page -= 1
                 print(f"finished at page {page+1}")
                 break
             else:
@@ -219,10 +272,13 @@ class Scraper:
             all_likes_counts = html_content.find('.u-background-white.u-flexbox.u-align-items-center.new-item-box__favourite-icon')
 
             #if the page has 0 products mean that we can stop scraping
+            print(f"len products = {len(products)}")
+
             if len(products) == 0:
                 last_page = True
 
-            data = []
+
+
             #get all the data from the products
             for product in products:
 
@@ -230,6 +286,8 @@ class Scraper:
                 title = gen_func.remove_illegal_characters(product.attrs.get("title"))
                 components = gen_func.split_data(title)
                 link = product.attrs.get("href")
+                if "referrer=catalog" not in link:
+                    continue
                 data_id = product.attrs.get("data-testid", "").split("-")
 
                 if len(data_id) == 7:
@@ -247,9 +305,8 @@ class Scraper:
                     if data_id and data_id in element_data_test_id:
                         aria_label = element.attrs.get("aria-label","")
                         if aria_label != "Aggiungi ai preferiti": # if equal means 0 likes
-                            likes_count = aria_label.split("Aggiunto ai preferiti da ")[1][0] # Adjust based on actual aria-label structure
+                            likes_count = aria_label.split("Aggiunto ai preferiti da ")[1].split(" ")[0] # Adjust based on actual aria-label structure
                             break  # Stop once the correct element is found
-
 
                 # Append the data to the list
                 data.append({
@@ -259,11 +316,12 @@ class Scraper:
                     "Size": components[3],
                     "Link": link,
                     "Likes": likes_count,
-                    "Dataid": data_id,
+                    "Dataid": str(data_id),
                     "MarketStatus": "On Sale",
                     "SearchDate": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     "Images": []
                 })
+            page += 1
         return data       
 
     
@@ -367,18 +425,39 @@ class Scraper:
 
     def compare_and_save_df(self, new_df, old_df, input_search):
         # Identifying new items
-        new_items = new_df[~new_df['Link'].isin(old_df['Link'])]
-        new_items["MarketStatus"] = "New"
+        # old_df['Link'] = old_df['Link'].astype(str).str.strip()
+        # new_df['Link'] = new_df['Link'].astype(str).str.strip()
 
-        # removed_items = old_df[~old_df['Link'].isin(new_df['Link'])]
 
-        # mark sold items as sold
-        old_df.loc[~old_df['Link'].isin(new_df['Link']), 'MarketStatus'] = 'Sold'
+        # new_df = new_df.loc[~(new_df['Link']).isin(old_df['Link'])]
+        # old_df.loc[~(old_df['Link']).isin(new_df['Link']), 'MarketStatus'] = 'Sold'
+
+        ############### above old approach, doesn't work########
+
+
+        ############ ????should i mark the new items as new ???????#########
+        # new_df.loc[:, "MarketStatus"] = "New"
+
+
+        link_list_old = list(old_df["Link"].values)
+        link_list_new = list(new_df["Link"].values)
+
+        for link in link_list_old:
+            if link not in link_list_new:
+                old_df.loc[old_df["Link"] == link, "MarketStatus"] = "Sold"
+        
+        for link in link_list_new:
+            if link in link_list_old:
+                new_df = new_df.drop(new_df[new_df['Link'] == link].index)
+
+
 
 
         # Save new items
-        if not new_items.empty:
-            old_df.append(new_df)
+        if len(new_df) > 0:
+            print("concateno il nuovo dataset")
+            old_df = pd.concat([old_df, new_df], ignore_index=True)
+            old_df = old_df.drop_duplicates(subset=["Link"], keep='first', inplace=False)
             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
@@ -469,7 +548,7 @@ class Scraper:
         #maybe this row can be removed
         df.reset_index(drop=True, inplace=True)  # This removes the old index
 
-        #add the temporary df witht he new rows to the original df
+        #add the temporary df with the new rows to the original df
         new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
 
         # add all new images and info to items 
