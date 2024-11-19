@@ -8,7 +8,32 @@ air_force_1 = {"search":"air force 1 bianche",
                "category": "scarpe uomo"}
 
 
+cucinelli = {"search":"cucinelli",
+               "prezzoDa":" ",
+               "prezzoA":" ",
+               "status":"1",
+               "colore":" ",
+               "brands":"Brunello Cucinelli",
+               "sort":"newest_first",
+               "category": "Donna/Vestiti/Abbigliamento da esterno/Cappotti"}
 
+speedy_40_lv = {"search":"Speedy Louis Vuitton 40",
+               "prezzoDa":" ",
+               "prezzoA":" ",
+               "status":"2",
+               "colore":" ",
+               "brands":" ",
+               "sort":"newest_first",
+               "category": " "}
+
+mocassini_prada = {"search":"Mocassini Prada Monolith",
+               "prezzoDa":" ",
+               "prezzoA":" ",
+               "status":"2",
+               "colore":" ",
+               "brands":"Prada",
+               "sort":"newest_first",
+               "category": " "}
 
 panda_dunk_low = {"search":"nike dunk low panda",
                 "prezzoDa":"",
@@ -23,7 +48,7 @@ panda_dunk_low = {"search":"nike dunk low panda",
 print(air_force_1["search"])
 
 
-programmed_searches = [air_force_1]
+programmed_searches = [cucinelli]
 #                        panda_dunk_low]
 
 colori = {
@@ -57,6 +82,7 @@ colori = {
         }
 
 
-categories = {"scarpe uomo": "1231"}
+categories = {"scarpe uomo": "1231",
+              "Donna/Vestiti/Abbigliamento da esterno/Cappotti": "1907"}
 
 

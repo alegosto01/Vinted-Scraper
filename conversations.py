@@ -14,48 +14,47 @@ from selenium.webdriver.common.action_chains import ActionChains
 import schedule
 import time
 import general_functions as gen_func
-
+import Scraper
 
 import requests
 
 
 
 def log_in(driver):
-    # response = requests.get(
-    # url='https://proxy.scrapeops.io/v1/',
-    # params={
-    #     'api_key': '5933586b-0a57-43ab-b57c-0f0e4086a22d',
-    #     'url': 'https://www.vinted.it/', 
-    #     'residential': 'true', 
-    # },
-    # )
 
-    # print('Response Body: ', response.content)
-    # driver.get("https://www.vinted.it")
-    time.sleep(3)
+    driver.get("https://www.vinted.it/")
+    time.sleep(5)
     try:
         cookie = driver.find_element(By.ID, "onetrust-accept-btn-handler")
-        cookie.click()
+        driver.execute_script("arguments[0].scrollIntoView();", cookie)
+        driver.execute_script("arguments[0].click();", cookie)
+        # cookie.click()
     except:
         pass    
 
     #click on login button
     login_btn = driver.find_element(By.XPATH,  "//a[@data-testid='header--login-button']")
-    login_btn.click()
+    driver.execute_script("arguments[0].scrollIntoView();", login_btn)
+    driver.execute_script("arguments[0].click();", login_btn)
+    # login_btn.click()
 
-    time.sleep(2)
+    time.sleep(5)
 
 
     accedi_btn = driver.find_element(By.XPATH,  "//span[@data-testid='auth-select-type--register-switch']")
-    accedi_btn.click()
+    driver.execute_script("arguments[0].scrollIntoView();", accedi_btn)
+    driver.execute_script("arguments[0].click();", accedi_btn)
+    # accedi_btn.click()
 
-    time.sleep(2)
+    time.sleep(5)
 
     mail_btn = driver.find_element(By.XPATH,  "//span[@data-testid='auth-select-type--login-email']")
-    mail_btn.click()
+    driver.execute_script("arguments[0].scrollIntoView();", mail_btn)
+    driver.execute_script("arguments[0].click();", mail_btn) 
+    # mail_btn.click()
 
 
-    time.sleep(2)
+    time.sleep(5)
 
     mail = "ale.gostoli@gmail.com"
     password = "xhni4sK3$/wf5AS"
@@ -64,7 +63,7 @@ def log_in(driver):
     mail_box = driver.find_element(By.XPATH, "//input[@id='username']")
     mail_box.send_keys(mail)
 
-    time.sleep(2)
+    time.sleep(5)
 
 
     password_box = driver.find_element(By.XPATH,  "//input[@id='password']")
@@ -151,9 +150,11 @@ def delete_chat(driver):
 
 
 
+# driver = webdriver.Chrome()
 
+# log_in(driver)
 
-
+# input("something")
 # # Setup WebDriver (make sure to download the appropriate driver)
 # driver = webdriver.Chrome()
 
