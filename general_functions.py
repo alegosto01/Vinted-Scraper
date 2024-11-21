@@ -4,7 +4,7 @@ import random as rnd
 import time
 import requests
 from selenium.common.exceptions import WebDriverException
-
+import pandas as pd
 
 def empty_excel(path):
     wb = load_workbook(path)
@@ -113,3 +113,41 @@ def download_all_images(image_urls, dictionary, data_id):
         # print("path exists i wont created it")
         download_image(image_url, os.path.join(folder_path,str(index)))
     return folder_path
+
+
+# def replace_names_with_ids(seller_csv, items_csv):
+
+#     seller_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv"
+#     seller_df = pd.read_csv(seller_csv)
+#     items_df = pd.read_csv(items_csv)
+
+#     names_to_convert = list(items_df[items_df['SellerId'].apply(lambda x: not str(x).replace('.', '', 1).isdigit())])
+
+#     seller_names_saved = seller_df.loc["SellerName"].values
+
+#     max_id = seller_df["SellerId"].max()
+
+#     for name in names_to_convert:
+#         if name in seller_names_saved:
+#             seller_id = seller_df.loc[seller_df["SellerName" == name, "SellerId"]]
+#             items_df[items_df["SellerId"] == name] = seller_id
+#         else:
+#             max_id += 1
+
+
+
+
+#     #checking if the seller is already saved or not and adding it if not
+#     if seller_name in seller_df.loc["SellerName"].values:
+#         seller_id = seller_df.loc[seller_df["SellerName" == seller_name, "SellerId"]]
+#     else:
+#         max_id = seller_df["SellerId"].max()
+#         seller_id = max_id + 1
+#         new_row = {
+#             "SellerId": seller_id,
+#             "SellerName": seller_name,
+#             "Location": location,
+#             "ReviewsCount": reviews_count,
+#             "Stars": stars
+#         }
+#         seller_df.append(new_row, ignore_index=True) 
