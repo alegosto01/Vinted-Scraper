@@ -89,38 +89,41 @@ SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 
 
 def main():
-    # scraper = Scraper.Scraper()
     # scraper.get_page_content("https://www.vinted.it/")
 
-    for i in range(1):
-        print(f"Round {i}")
-        for dictionary in search.programmed_searches:
-                
-                scraper = Scraper.Scraper()
-                print(f"search = {dictionary}")
-                input_search = dictionary["search"]
-                product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+    scraper = Scraper.Scraper()
 
-                scraped_data = scraper.scrape_products(dictionary)
-                columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
-       'MarketStatus', 'SearchDate', 'Images']
-                new_df = pd.DataFrame(scraped_data, columns=columns)
-
-                #if it doesn't exists means that is the first search ever
-                if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
-                    print("not first search i call compare and save")
-                    old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-                    scraper.compare_and_save_df(new_df,old_df,input_search)
-                else:
-                    old_df = new_df.copy()
-                    # old_df.reset_index(drop=True, inplace=True)  # This removes the old index
-                    old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
-                    print("first search csv created")
+    scraper.complete_df_with_sigle_scrapes(search.mocassini_prada)
 
 
-    #         time.sleep(60)
+    # for i in range(1):
+    #     print(f"Round {i}")
+    #     for dictionary in search.programmed_searches:
+            
+    #         scraper = Scraper.Scraper()
+    #         print(f"search = {dictionary}")
+    #         input_search = dictionary["search"]
+    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
-    #     time.sleep(3600)
+    #         scraped_data = scraper.scrape_products(dictionary)
+    #         columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+    # 'MarketStatus', 'SearchDate', 'Images', "SellerId"]
+    #         new_df = pd.DataFrame(scraped_data, columns=columns)
+
+    #         #if it doesn't exists means that is the first search ever
+    #         if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
+    #             print("not first search i call compare and save")
+    #             old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+    #             scraper.compare_and_save_df(new_df,old_df,input_search)
+    #         else:
+    #             old_df = new_df.copy()
+    #             # old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+    #             print("first search csv created")
+
+            # time.sleep(60)
+
+        # time.sleep(3600)
 
 
 

@@ -48,7 +48,7 @@ panda_dunk_low = {"search":"nike dunk low panda",
 print(air_force_1["search"])
 
 
-programmed_searches = [cucinelli]
+programmed_searches = [mocassini_prada]
 #                        panda_dunk_low]
 
 colori = {

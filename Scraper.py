@@ -110,7 +110,7 @@ class Scraper:
             # Parse the HTML content from the response
             html = response.html
             # Optionally render JavaScript if the content is dynamically loaded
-            html.render(sleep=7)  # Adjust sleep if needed to allow content to load   
+            html.render(sleep=10)  # Adjust sleep if needed to allow content to load   
             if html:
                 success = True    
                 return html
@@ -230,31 +230,8 @@ class Scraper:
             except:
                 continue
                 
-
-
-            # if total_n_items == -1:
-            #     total_n_items_element = html_content.find("div[class='u-ui-padding-vertical-medium u-flexbox u-justify-content-between u-align-items-center']", first=True)
-            #     for element in total_n_items_element.find("div[class='web_ui__Text__text web_ui__Text__subtitle web_ui__Text__left']"):
-            #         print(f"element text = {element.text}")
-            #         if "risultati." in element.text:
-            #             print("found")
-            #             total_n_items = int(element.text[0])
             
             time.sleep(5)
-            # try:
-            #     no_item_found_element = html_content.find("h1[data-testid='search-empty-state--title']")
-            #     print(no_item_found_element)
-            #     if no_item_found_element:
-            #         last_page = True
-            # except:
-            #     pass
-
-            # #if is the first access accept the cookies
-            # try:
-            #     cookie = self.driver.find_element(By.ID, "onetrust-accept-btn-handler")
-            #     cookie.click()
-            # except:
-            #     pass
 
 
             #if the previous page was empty then stop
@@ -276,8 +253,6 @@ class Scraper:
 
             if len(products) == 0:
                 last_page = True
-
-
 
             #get all the data from the products
             for product in products:
@@ -308,6 +283,7 @@ class Scraper:
                             likes_count = aria_label.split("Aggiunto ai preferiti da ")[1].split(" ")[0] # Adjust based on actual aria-label structure
                             break  # Stop once the correct element is found
 
+                
                 # Append the data to the list
                 data.append({
                     "Title": components[0],
@@ -326,104 +302,150 @@ class Scraper:
 
     
     #scrape the specific web page of an item
-    def scrape_single_product(self, url, data_id, dictionary):
-
+    def scrape_single_product(self, url, data_id, dictionary, seller_df, max_id, get_images = False):
         #get path of the main folder of the search
         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
-        self.driver = self.init_driver()
+        # self.driver = self.init_driver()
 
-        # html_content = self.get_page_content(url)
-        # page_exists = True
+        html_content = self.get_page_content(url)
+        if html_content is None:
+            return [], max_id
+        page_exists = True
 
         #check if the page still exists
         try:
             # Try to find the "page doesn't exist" indicator element
 
-            # page_doesnt_exist = html_content.find("img[src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
-            page_doesnt_exist = self.driver.find_element(By.XPATH, "//img[@src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
+            page_doesnt_exist = html_content.find("img[src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
+            # page_doesnt_exist = self.driver.find_element(By.XPATH, "//img[@src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
             print("Page does not exist.")  # This will execute if the element is found
-            page_exists = False
+            page_exists = True ###DA METTERE FALSE
         except NoSuchElementException:
             pass
 
         #f the page exists then get all the data, else remove the row from the df (for now)
         if page_exists:
-            time.sleep(1)
-            
+
+            print("PAge EXISTS")            
             #get reviews count and star rating
-            # reviews_number_father = html_content.find("div[class='web_ui__Rating__label']")
-            reviews_number_father = self.driver.find_element(By.XPATH, "//div[@class='web_ui__Rating__label']")
+            try:
+                reviews_number_father = html_content.find("div[class='web_ui__Rating__label']")
+            except:
+                print("PAGE FAILED TO LOAD")
+            # reviews_number_father = self.driver.find_element(By.XPATH, "//div[@class='web_ui__Rating__label']")
             reviews_count = 0
             try:
-                # reviews_count = html_content.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']")
-                reviews_count = int(reviews_number_father.find_element(By.XPATH, "//h4[@class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
+                reviews_count = int(reviews_number_father.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
+                # reviews_count = int(reviews_number_father.find_element(By.XPATH, "//h4[@class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
             except:
                 pass
-
-            # stars = html_content.find("div[class='web_ui__Rating__star web_ui__Rating__full']")
-            stars = self.driver.find_elements(By.XPATH, "//div[@class='web_ui__Rating__star web_ui__Rating__full']")
-
-            #get location
-            # location_element = html_content.find("div.details-list__item-value[itemprop='location']", first=True)
-            # location = location_element.text if location_element else None            
-            location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
-
-            #get views
-            # views_count_element = html_content.find("div.details-list__item-value[itemprop='view_count']", first=True)
-            # views_count = location_element.text if location_element else None  
-            views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
-
-            #get interested people
-            interested_count = 0
+            
             try:
-                # interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
-                # interested_count = location_element.text.split(" ")[0] if location_element else None  
-                interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
+                stars_element = html_content.find("div[class='web_ui__Rating__rating web_ui__Rating__small']", first=True)
+                stars = stars_element.attrs.get("aria-label").split(" ")[2]
+                # stars = self.driver.find_elements(By.XPATH, "//div[@class='web_ui__Rating__star web_ui__Rating__full']")
+
+                #get location
+                location_element = html_content.find("div.details-list__item-value[itemprop='location']", first=True)
+                location = location_element.text if location_element else None            
+                # location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
+
+                #get views
+                views_count_element = html_content.find("div.details-list__item-value[itemprop='view_count']", first=True)
+                views_count = int(views_count_element.text) if views_count_element else None  
+                # views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
+
+                #get interested people
+                interested_count = 0
+                try:
+                    interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
+                    interested_count = int(interested_count_element.text.split(" ")[0]) if interested_count_element else None  
+                    # interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
+                except:
+                    pass
+
+
+                #get upload date
+                upload_date = " ".join(
+                    html_content.find("div.details-list__item-value[itemprop='upload_date']", first=True).text.split()[:-1]
+                    # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
+                    )
+                
+                #get item description
+                item_description = html_content.find("span[class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']", first=True).text
+                # item_description = self.driver.find_element(By.XPATH, "//span[@class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']").text
+
+                #get seller name
+                seller_name = html_content.find(f"span[data-testid*='profile-username']", first=True).text
             except:
-                pass
+                return [], max_id
 
 
-            #get upload date
-            upload_date = " ".join(
-                # html_content.find("div.details-list__item-value[itemprop='interested']", first=True).text.split()[:-1]
-                self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
-                )
-            
-            #get item description
-            # item_description = html_content.find("span[class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']")
-            item_description = self.driver.find_element(By.XPATH, "//span[@class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']").text
 
-            #click on one image to open the carousel
-            image_button = self.driver.find_element(By.XPATH, "//button[@class='item-thumbnail']")
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", image_button)
-            self.driver.execute_script("arguments[0].click();", image_button)
+            #checking if the seller is already saved or not and adding it if not
+            if seller_name in seller_df["SellerName"].values:
+                seller_id = seller_df.loc[seller_df["SellerName"] == seller_name, "SellerId"].values[0]
+            else:
+                max_id += 1
+                seller_id = max_id
+                # seller_id = seller_df["SellerId"].iloc[-1] + 1
+                new_seller_row = {
+                    "SellerId": max_id,
+                    "SellerName": seller_name,
+                    "Location": location,
+                    "ReviewsCount": reviews_count,
+                    "Stars": stars
+                }
+                seller_df = pd.concat([seller_df, pd.DataFrame([new_seller_row])], ignore_index=True)
 
-            time.sleep(2)
-            #get all the images
-            image_carousel = self.driver.find_element(By.XPATH, "//div[contains(@class, 'image-carousel__image-wrapper')]")
-            images_element = image_carousel.find_elements(By.TAG_NAME, "img")
-            image_urls = [img.get_attribute("src") for img in images_element]
-            
+            ### get images or not depending on what is set in the bool parameter get_images
+            if get_images:
+                print("getting images urls")
+                image_urls = self.get_all_product_images(url)
+            else:
+                image_urls = []
+
             new_row = {
                 "Images": image_urls,
                 "Interested_count": interested_count,
                 "View_count": views_count,
                 "Item_description": item_description,
                 "Upload_date": upload_date,
-                "Dataid": data_id
+                "Dataid": data_id,
+                "SellerId": seller_id
             }
         else:
             new_row = []
             print("The page doesnt exist")
-        return new_row
+        
+        print(f"new row = {new_row}")
+        return new_row, max_id
 
         # if len(stars) >= 4 and reviews_count > 3:
         #     print("almeno 4 stelle e 3 reviews")
         # else:
         #     print("non abbastanza stelle o reviews")
         
+    def get_all_product_images(self, url):
+        self.driver = self.init_driver()
+
+        gen_func.safe_get(self.driver,url)
+
+        #click on one image to open the carousel
+
+        image_button = self.driver.find_element(By.XPATH, "//button[@class='item-thumbnail']")
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", image_button)
+        self.driver.execute_script("arguments[0].click();", image_button)
+
+        time.sleep(2)
+        #get all the images
+        image_carousel = self.driver.find_element(By.XPATH, "//div[contains(@class, 'image-carousel__image-wrapper')]")
+        images_element = image_carousel.find_elements(By.TAG_NAME, "img")
+        image_urls = [img.get_attribute("src") for img in images_element]
+        return image_urls
 
     def compare_and_save_df(self, new_df, old_df, input_search):
+        print("in compare and save")
         # Identifying new items
         # old_df['Link'] = old_df['Link'].astype(str).str.strip()
         # new_df['Link'] = new_df['Link'].astype(str).str.strip()
@@ -445,13 +467,15 @@ class Scraper:
         for link in link_list_old:
             if link not in link_list_new:
                 old_df.loc[old_df["Link"] == link, "MarketStatus"] = "Sold"
+
+        print("Marked sold")
         
         for link in link_list_new:
             if link in link_list_old:
                 new_df = new_df.drop(new_df[new_df['Link'] == link].index)
 
 
-
+        print("Before concat")
 
         # Save new items
         if len(new_df) > 0:
@@ -494,6 +518,7 @@ class Scraper:
     def complete_df_with_sigle_scrapes(self, dictionary):
 
         csv_path = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv"
+
         images_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images"
         
         #read csv to modify it
@@ -503,43 +528,55 @@ class Scraper:
         #initialize a list of new rows to add to the csv
         new_rows = []
 
+
+        seller_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv"
+        seller_df = pd.read_csv(seller_csv_path)
+        
+        max_id = seller_df["SellerId"].max()
+
         #loop through the dataset to detect the row which are missing the info from the single product scrape
         for index, row in df.iterrows():  
+
+            # print(f"row = {row['Images']}")
             #if images is empty means that the row doesn't have the complete info
             #also check that the folder is not created already, if it is we can skip it
-            if pd.isna(row["Images"]) and not os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images/{row['Dataid']}"):
-                self.driver = self.init_driver()
+            # if pd.isna(row["Images"]) and not os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images/{row['Dataid']}"):
+            # if len(list(row["Images"])) == 0:
+                # self.driver = self.init_driver()
 
                 #get the extra data
-                new_row = self.scrape_single_product(str(row["Link"]), row["Dataid"], dictionary)
+                new_row, max_id = self.scrape_single_product(str(row["Link"]), row["Dataid"], dictionary, seller_df, max_id)
 
+                # if new_row:
 
-                if new_row:
+                #     #maybe this can removed
+                #     df["Images"] = df["Images"].astype("object")
 
-                    #maybe this can removed
-                    df["Images"] = df["Images"].astype("object")
+                #     #fill the images cell with the list of images just scraped
+                #     df.at[index, "Images"] = new_row["Images"]
 
-                    #fill the images cell with the list of images just scraped
-                    df.at[index, "Images"] = new_row["Images"]
+                #     # Remove the images from the new_row becauase right above i populated the column "images" in the original df
+                #     first_key = next(iter(new_row))
+                #     new_row.pop(first_key)
 
-                    # Remove the images from the new_row becauase right above i populated the column "images" in the original df
-                    first_key = next(iter(new_row))
-                    new_row.pop(first_key)
-
-                    #download and store all the images
-                    image_folder_path = gen_func.download_all_images(df.at[index, "Images"], dictionary, new_row["Dataid"])
+                #     #download and store all the images
+                #     image_folder_path = gen_func.download_all_images(df.at[index, "Images"], dictionary, new_row["Dataid"])
                     
-                    #check the images to recognize if the item is what we want
-                    is_item_right = dataset_cleaner.check_single_item_images(dictionary, image_folder_path)
-                else: #if new_row is empty means that the page doeas exist anymore
-                    is_item_right = False
+                #     #check the images to recognize if the item is what we want
+                #     is_item_right = dataset_cleaner.check_single_item_images(dictionary, image_folder_path)
+                # else: #if new_row is empty means that the page doeas exist anymore
+                #     is_item_right = False
 
                 #if the item is correct we store it otherwise we drop the whole row in the csv
-                if is_item_right:
-                    new_rows.append(new_row)
-                else:
-                    df.drop(index, inplace=True)  # Drop the row in the main DataFrame
-            time.sleep(10)
+                new_rows.append(new_row)
+                # if is_item_right:
+                #     new_rows.append(new_row)
+                # else:
+                #     df.drop(index, inplace=True)  # Drop the row in the main DataFrame
+            # time.sleep(10)
+
+        
+        seller_df.to_csv(seller_csv_path, index=False)
 
         #create a temporary df with the new rows
         columns = ["Interested_count", "View_count", "Item_description", "Upload_date", "Dataid"]
@@ -561,3 +598,98 @@ class Scraper:
 
 
 
+########################## old version of single product scrape before using web_unlocker ####à 
+
+
+        # #get path of the main folder of the search
+        # product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+        # self.driver = self.init_driver()
+
+        # # html_content = self.get_page_content(url)
+        # # page_exists = True
+
+        # #check if the page still exists
+        # try:
+        #     # Try to find the "page doesn't exist" indicator element
+
+        #     # page_doesnt_exist = html_content.find("img[src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
+        #     page_doesnt_exist = self.driver.find_element(By.XPATH, "//img[@src='https://marketplace-web-assets.vinted.com/assets/error-page/404-rack.svg']")
+        #     print("Page does not exist.")  # This will execute if the element is found
+        #     page_exists = False
+        # except NoSuchElementException:
+        #     pass
+
+        # #f the page exists then get all the data, else remove the row from the df (for now)
+        # if page_exists:
+        #     time.sleep(1)
+            
+        #     #get reviews count and star rating
+        #     # reviews_number_father = html_content.find("div[class='web_ui__Rating__label']")
+        #     reviews_number_father = self.driver.find_element(By.XPATH, "//div[@class='web_ui__Rating__label']")
+        #     reviews_count = 0
+        #     try:
+        #         # reviews_count = html_content.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']")
+        #         reviews_count = int(reviews_number_father.find_element(By.XPATH, "//h4[@class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
+        #     except:
+        #         pass
+
+        #     # stars = html_content.find("div[class='web_ui__Rating__star web_ui__Rating__full']")
+        #     stars = self.driver.find_elements(By.XPATH, "//div[@class='web_ui__Rating__star web_ui__Rating__full']")
+
+        #     #get location
+        #     # location_element = html_content.find("div.details-list__item-value[itemprop='location']", first=True)
+        #     # location = location_element.text if location_element else None            
+        #     location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
+
+        #     #get views
+        #     # views_count_element = html_content.find("div.details-list__item-value[itemprop='view_count']", first=True)
+        #     # views_count = location_element.text if location_element else None  
+        #     views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
+
+        #     #get interested people
+        #     interested_count = 0
+        #     try:
+        #         # interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
+        #         # interested_count = location_element.text.split(" ")[0] if location_element else None  
+        #         interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
+        #     except:
+        #         pass
+
+
+        #     #get upload date
+        #     upload_date = " ".join(
+        #         # html_content.find("div.details-list__item-value[itemprop='interested']", first=True).text.split()[:-1]
+        #         self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
+        #         )
+            
+        #     #get item description
+        #     # item_description = html_content.find("span[class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']")
+        #     item_description = self.driver.find_element(By.XPATH, "//span[@class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']").text
+
+        #     #get seller name
+        #     seller_name = html_content.find('.u-background-white.u-flexbox.u-align-items-center.new-item-box__favourite-icon')
+            
+            
+        #     #click on one image to open the carousel
+        #     image_button = self.driver.find_element(By.XPATH, "//button[@class='item-thumbnail']")
+        #     self.driver.execute_script("arguments[0].scrollIntoView(true);", image_button)
+        #     self.driver.execute_script("arguments[0].click();", image_button)
+
+        #     time.sleep(2)
+        #     #get all the images
+        #     image_carousel = self.driver.find_element(By.XPATH, "//div[contains(@class, 'image-carousel__image-wrapper')]")
+        #     images_element = image_carousel.find_elements(By.TAG_NAME, "img")
+        #     image_urls = [img.get_attribute("src") for img in images_element]
+            
+        #     new_row = {
+        #         "Images": image_urls,
+        #         "Interested_count": interested_count,
+        #         "View_count": views_count,
+        #         "Item_description": item_description,
+        #         "Upload_date": upload_date,
+        #         "Dataid": data_id
+        #     }
+        # else:
+        #     new_row = []
+        #     print("The page doesnt exist")
+        # return new_row
