@@ -107,17 +107,17 @@ def main():
 
     #         scraped_data = scraper.scrape_products(dictionary)
     #         columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
-    # 'MarketStatus', 'SearchDate', 'Images', "SellerId"]
+    # 'MarketStatus', 'SearchDate', 'Images']
     #         new_df = pd.DataFrame(scraped_data, columns=columns)
 
-    #         #if it doesn't exists means that is the first search ever
+    #         if it doesn't exists means that is the first search ever
     #         if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
     #             print("not first search i call compare and save")
     #             old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
     #             scraper.compare_and_save_df(new_df,old_df,input_search)
     #         else:
     #             old_df = new_df.copy()
-    #             # old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+    #             old_df.reset_index(drop=True, inplace=True)  # This removes the old index
     #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
     #             print("first search csv created")
 

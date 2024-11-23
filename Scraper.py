@@ -185,7 +185,7 @@ class Scraper:
                 brands_search = brands_search + "&brand_ids[]=" + str(brand_id)
 
         #set condition of the items
-        status = "" if dictionary["status"] == " " else "&status_ids[]=" + dictionary["status"]
+        condition = "" if dictionary["condition"] == " " else "&status_ids[]=" + dictionary["condition"]
         
         #set item's category
         category = "" if dictionary["category"] == " " else "&catalog[]=" + search.categories[dictionary["category"]]
@@ -193,7 +193,7 @@ class Scraper:
 
 
 
-        webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{status}{brands_search}{category}"    
+        webpage = f"https://www.vinted.it/catalog?currency=EUR{order}{input_search}{color_search}{price_from}{price_to}{condition}{brands_search}{category}"    
         # webpage = "https://www.vinted.it/catalog?search_text=adidas%20gazelle%20black%20and%20white&status_ids[]=1&color_ids[]=12&currency=EUR"
         return webpage
 
@@ -290,6 +290,7 @@ class Scraper:
                     "Price": float(re.sub(r'[^\d.]', '', components[1].replace(',', '.'))), #remove non digits caracters and cast it to float
                     "Brand": components[2],
                     "Size": components[3],
+                    # "Condition": search.condition_dict[dictionary[condition]],
                     "Link": link,
                     "Likes": likes_count,
                     "Dataid": str(data_id),
@@ -302,14 +303,14 @@ class Scraper:
 
     
     #scrape the specific web page of an item
-    def scrape_single_product(self, url, data_id, dictionary, seller_df, max_id, get_images = False):
+    def scrape_single_product(self, url, data_id, dictionary, get_images = False):
         #get path of the main folder of the search
         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
         # self.driver = self.init_driver()
 
         html_content = self.get_page_content(url)
         if html_content is None:
-            return [], max_id
+            return [], []
         page_exists = True
 
         #check if the page still exists
@@ -329,17 +330,13 @@ class Scraper:
             print("PAge EXISTS")            
             #get reviews count and star rating
             try:
-                reviews_number_father = html_content.find("div[class='web_ui__Rating__label']")
+                reviews_element = html_content.find("div[class='web_ui__Rating__rating web_ui__Rating__small']", first=True).text
+                # reviews_element = html_content.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text
+                reviews_count = int(reviews_element)
             except:
                 print("PAGE FAILED TO LOAD")
-            # reviews_number_father = self.driver.find_element(By.XPATH, "//div[@class='web_ui__Rating__label']")
-            reviews_count = 0
-            try:
-                reviews_count = int(reviews_number_father.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
-                # reviews_count = int(reviews_number_father.find_element(By.XPATH, "//h4[@class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text)
-            except:
-                pass
-            
+                reviews_count = 0
+
             try:
                 stars_element = html_content.find("div[class='web_ui__Rating__rating web_ui__Rating__small']", first=True)
                 stars = stars_element.attrs.get("aria-label").split(" ")[2]
@@ -375,28 +372,41 @@ class Scraper:
                 item_description = html_content.find("span[class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']", first=True).text
                 # item_description = self.driver.find_element(By.XPATH, "//span[@class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']").text
 
+ 
                 #get seller name
                 seller_name = html_content.find(f"span[data-testid*='profile-username']", first=True).text
             except:
-                return [], max_id
-
-
-
-            #checking if the seller is already saved or not and adding it if not
-            if seller_name in seller_df["SellerName"].values:
-                seller_id = seller_df.loc[seller_df["SellerName"] == seller_name, "SellerId"].values[0]
-            else:
-                max_id += 1
-                seller_id = max_id
-                # seller_id = seller_df["SellerId"].iloc[-1] + 1
-                new_seller_row = {
-                    "SellerId": max_id,
+                print("problem finding something")
+                return [], []
+            
+            item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
+            item_condition = item_condition_element.find("div[class='details-list__item-value']", first=True).text
+            print(f"condition = {item_condition}")
+            new_seller_row = {
+                    "SellerId": " ",
                     "SellerName": seller_name,
                     "Location": location,
                     "ReviewsCount": reviews_count,
                     "Stars": stars
-                }
-                seller_df = pd.concat([seller_df, pd.DataFrame([new_seller_row])], ignore_index=True)
+            }
+
+
+
+            # #checking if the seller is already saved or not and adding it if not
+            # if seller_name in seller_df["SellerName"].values:
+            #     seller_id = seller_df.loc[seller_df["SellerName"] == seller_name, "SellerId"].values[0]
+            # else:
+            #     max_id += 1
+            #     seller_id = max_id
+            #     # seller_id = seller_df["SellerId"].iloc[-1] + 1
+            #     new_seller_row = {
+            #         "SellerId": max_id,
+            #         "SellerName": seller_name,
+            #         "Location": location,
+            #         "ReviewsCount": reviews_count,
+            #         "Stars": stars
+            #     }
+            #     seller_df = pd.concat([seller_df, pd.DataFrame([new_seller_row])], ignore_index=True)
 
             ### get images or not depending on what is set in the bool parameter get_images
             if get_images:
@@ -409,17 +419,19 @@ class Scraper:
                 "Images": image_urls,
                 "Interested_count": interested_count,
                 "View_count": views_count,
-                "Item_description": item_description,
+                "Description": item_description,
+                "Condition": item_condition,
                 "Upload_date": upload_date,
                 "Dataid": data_id,
-                "SellerId": seller_id
+                "SellerId": " ",
+                "SellerName": seller_name
             }
         else:
             new_row = []
             print("The page doesnt exist")
         
         print(f"new row = {new_row}")
-        return new_row, max_id
+        return new_row, new_seller_row
 
         # if len(stars) >= 4 and reviews_count > 3:
         #     print("almeno 4 stelle e 3 reviews")
@@ -487,7 +499,7 @@ class Scraper:
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 
 
-            #send message and download main image
+            # send message and download main image
 
             # count = 0
             # for index, row in enumerate(new_df):
@@ -527,12 +539,11 @@ class Scraper:
         print(f"len df = {len(df)}")
         #initialize a list of new rows to add to the csv
         new_rows = []
-
+        new_seller_rows = []
 
         seller_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv"
         seller_df = pd.read_csv(seller_csv_path)
         
-        max_id = seller_df["SellerId"].max()
 
         #loop through the dataset to detect the row which are missing the info from the single product scrape
         for index, row in df.iterrows():  
@@ -545,7 +556,7 @@ class Scraper:
                 # self.driver = self.init_driver()
 
                 #get the extra data
-                new_row, max_id = self.scrape_single_product(str(row["Link"]), row["Dataid"], dictionary, seller_df, max_id)
+                new_row, new_seller_row = self.scrape_single_product(str(row["Link"]), row["Dataid"], dictionary)
 
                 # if new_row:
 
@@ -569,30 +580,50 @@ class Scraper:
 
                 #if the item is correct we store it otherwise we drop the whole row in the csv
                 new_rows.append(new_row)
+                new_seller_rows.append(new_seller_row)
                 # if is_item_right:
                 #     new_rows.append(new_row)
                 # else:
                 #     df.drop(index, inplace=True)  # Drop the row in the main DataFrame
             # time.sleep(10)
+        max_id = seller_df["SellerId"].iloc[-1]
+
+        columns_seller = ["SellerId", "SellerName", "Location", "ReviewsCount", "Stars"]
+        temp_seller_df = pd.DataFrame(new_seller_rows, columns=columns_seller)
+        temp_seller_df.drop_duplicates(subset=["SellerName"], keep='first', inplace=True)
 
         
-        seller_df.to_csv(seller_csv_path, index=False)
+        # seller_df.to_csv(seller_csv_path, index=False)
 
         #create a temporary df with the new rows
-        columns = ["Interested_count", "View_count", "Item_description", "Upload_date", "Dataid"]
+        columns = ["Interested_count", "View_count", "Item_description", "Upload_date", "Dataid", "SellerId", "SellerName"]
         complementary_df = pd.DataFrame(new_rows, columns=columns)
+
+        for index, row in complementary_df.iterrows():  
+            if row["SellerName"] in seller_df["SellerName"].values:
+                seller_id = seller_df.loc[seller_df["SellerName"] == row["SellerName"], "SellerId"].values[0]
+                row["SellerId"] = seller_id
+                temp_seller_df.drop(temp_seller_df[temp_seller_df["SellerName"] == row["SellerName"]].index, inplace=True)
+            else:
+                max_id += 1
+                complementary_df.at[index, "SellerId"] = max_id  # Modify directly in DataFrame
+                temp_seller_df.loc[temp_seller_df["SellerName"] == row["SellerName"], "SellerId"] = max_id
 
         #maybe this row can be removed
         df.reset_index(drop=True, inplace=True)  # This removes the old index
 
         #add the temporary df with the new rows to the original df
         new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
+        new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
+        
+        
+        new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)
+        new_seller_df.to_csv(seller_csv_path, index=False)
 
         # add all new images and info to items 
         # new_df = pd.merge(df, complementary_df, on="Dataid", how="left")
 
         #overwrite the csv with the updated data
-        new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
 
         
 
