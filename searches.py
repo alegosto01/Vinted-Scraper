@@ -1,7 +1,7 @@
 air_force_1 = {"search":"air force 1 bianche",
                "prezzoDa":" ",
                "prezzoA":" ",
-               "status":"1",
+               "condition":"1",
                "colore":"bianco",
                "brands":"Air Force-Nike Air-Nike",
                "sort":"newest_first",
@@ -11,7 +11,7 @@ air_force_1 = {"search":"air force 1 bianche",
 cucinelli = {"search":"cucinelli",
                "prezzoDa":" ",
                "prezzoA":" ",
-               "status":"1",
+               "condition":"1",
                "colore":" ",
                "brands":"Brunello Cucinelli",
                "sort":"newest_first",
@@ -20,7 +20,7 @@ cucinelli = {"search":"cucinelli",
 speedy_40_lv = {"search":"Speedy Louis Vuitton 40",
                "prezzoDa":" ",
                "prezzoA":" ",
-               "status":"2",
+               "condition":"2",
                "colore":" ",
                "brands":" ",
                "sort":"newest_first",
@@ -29,7 +29,7 @@ speedy_40_lv = {"search":"Speedy Louis Vuitton 40",
 mocassini_prada = {"search":"Mocassini Prada Monolith",
                "prezzoDa":" ",
                "prezzoA":" ",
-               "status":"2",
+               "condition":"2",
                "colore":" ",
                "brands":"Prada",
                "sort":"newest_first",
@@ -38,15 +38,19 @@ mocassini_prada = {"search":"Mocassini Prada Monolith",
 panda_dunk_low = {"search":"nike dunk low panda",
                 "prezzoDa":"",
                "prezzoA":"",
-               "status":"1",
+               "condition":"1",
                "colore":"bianco-nero",
                "brands":"",
                "sort":"newest_first",
                "category": "scarpe uomo"}
 
 
-print(air_force_1["search"])
-
+condition_dict = {"0": "New",
+                  "1": "New without receipt",
+                  "2": "Excelent",
+                  "3": "Very Good",
+                  "4": "Satisfactory"
+                  }
 
 programmed_searches = [mocassini_prada]
 #                        panda_dunk_low]
