@@ -10,7 +10,6 @@ from datetime import datetime
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import pyautogui
 import pandas as pd
 from selenium.webdriver.common.action_chains import ActionChains
 import schedule
@@ -91,37 +90,43 @@ SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 def main():
     # scraper.get_page_content("https://www.vinted.it/")
 
-    scraper = Scraper.Scraper()
+    # scraper = Scraper.Scraper()
 
-    scraper.complete_df_with_sigle_scrapes(search.mocassini_prada)
+    # scraper.complete_df_with_sigle_scrapes(search.mocassini_prada)
 
-
-    # for i in range(1):
-    #     print(f"Round {i}")
-    #     for dictionary in search.programmed_searches:
+    # first_product_id = 0
+    for i in range(10):
+        print(f"Round {2}")
+        for dictionary in search.programmed_searches:
             
-    #         scraper = Scraper.Scraper()
-    #         print(f"search = {dictionary}")
-    #         input_search = dictionary["search"]
-    #         product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+            scraper = Scraper.Scraper()
+            print(f"search = {dictionary}")
+            input_search = dictionary["search"]
+            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
 
-    #         scraped_data = scraper.scrape_products(dictionary)
-    #         columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
-    # 'MarketStatus', 'SearchDate', 'Images']
-    #         new_df = pd.DataFrame(scraped_data, columns=columns)
+            scraped_data = scraper.scrape_products_serial(dictionary, i)
+            columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+    'MarketStatus', 'SearchDate', 'Images', "SearchCount", "Page"]
+            new_df = pd.DataFrame(scraped_data, columns=columns)
 
-    #         if it doesn't exists means that is the first search ever
-    #         if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
-    #             print("not first search i call compare and save")
-    #             old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-    #             scraper.compare_and_save_df(new_df,old_df,input_search)
-    #         else:
-    #             old_df = new_df.copy()
-    #             old_df.reset_index(drop=True, inplace=True)  # This removes the old index
-    #             old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
-    #             print("first search csv created")
 
-            # time.sleep(60)
+            # if i == 0:
+            #     first_product_id = new_df['Dataid'].iloc[-1]
+            #     print(f"First product id = {first_product_id}")
+
+
+            #if it doesn't exists means that is the first search ever
+            if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
+                print("not first search i call compare and save")
+                old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+                scraper.compare_and_save_df_serial(new_df,old_df,input_search)
+            else:
+                old_df = new_df.copy()
+                old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+                print("first search csv created")
+
+        time.sleep(400)
 
         # time.sleep(3600)
 

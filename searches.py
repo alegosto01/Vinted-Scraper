@@ -24,7 +24,7 @@ speedy_40_lv = {"search":"Speedy Louis Vuitton 40",
                "colore":" ",
                "brands":" ",
                "sort":"newest_first",
-               "category": " "}
+               "category": "Donna/Scarpe"}
 
 mocassini_prada = {"search":"Mocassini Prada Monolith",
                "prezzoDa":" ",
@@ -45,14 +45,27 @@ panda_dunk_low = {"search":"nike dunk low panda",
                "category": "scarpe uomo"}
 
 
-condition_dict = {"0": "New",
+scarpe_donna = {"search":" ",
+               "prezzoDa":" ",
+               "prezzoA":" ",
+               "condition":"1",
+               "colore":" ",
+               "brands":" ",
+               "sort":"newest_first",
+               "category": "Donna/Scarpe"}
+
+
+programmed_searches = [scarpe_donna]
+
+#################
+condition_dict = {
+                  "0": "New",
                   "1": "New without receipt",
                   "2": "Excelent",
                   "3": "Very Good",
                   "4": "Satisfactory"
-                  }
+                }
 
-programmed_searches = [mocassini_prada]
 #                        panda_dunk_low]
 
 colori = {
@@ -87,6 +100,7 @@ colori = {
 
 
 categories = {"scarpe uomo": "1231",
-              "Donna/Vestiti/Abbigliamento da esterno/Cappotti": "1907"}
+              "Donna/Vestiti/Abbigliamento da esterno/Cappotti": "1907",
+              "Donna/Scarpe": "16"}
 
 
