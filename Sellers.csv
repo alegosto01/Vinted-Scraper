@@ -1,51 +1,50 @@
 SellerId,SellerName,Location,ReviewsCount,Stars
-1,zesneakerss,Francia,116.0,4.9
-2,camille0475706706,"Seraing, Belgio",39.0,4.7
-,,,,
-4,shoppingmady,Germania,7.0,5
-5,jayp_1,"Noisy-le-Grand, Francia",5.0,5
-6,florencegarnier0312,"Lacanau, Francia",228.0,4.8
-8,nananaduah,"Amsterdam, Paesi Bassi",43.0,5
-9,milli3131,Spagna,15.0,5
-10,erena,"Berlin, Germania",173.0,5
-11,doraloula,"Gentilly, Francia",45.0,4.8
-12,michaeldescendre,"Gent, Belgio",483.0,4.9
-13,goldencomet,"Wavre, Belgio",391.0,4.9
-14,rene.slvtr,"Ihlow, Germania",20.0,5
-15,alinarodionova,"Paris, Francia",28.0,5
-16,dllouis,"Longwy, Francia",128.0,5
-17,mireia.cl,"Eliana, L', Spagna",11.0,5
-18,lsem02,"Milano, Italia",3.0,5
-20,yacinemakhlouf,Belgio,26.0,4.5
-21,milena.aaa,"Köln, Germania",109.0,4.9
-22,michellandmann,"Frankfurt am Main, Germania",9.0,5
-23,nesdogan,"Amsterdam, Paesi Bassi",30.0,4.9
-24,adelinebrtt,Francia,1440.0,4.9
-25,jeny1810,Francia,157.0,4.7
-26,elaenoel,"Aubagne, Francia",8.0,4.5
-27,siennagolle,"Rhode-Saint-Genèse, Belgio",46.0,4.7
-29,ramona40695,"Napoli, Italia",6.0,5
-30,tonygiunta24,"Messina, Italia",105.0,4.8
-31,jonathan_santos,"Hamburg, Germania",51.0,5
-32,alissabkm,Francia,128.0,4.9
-33,kiraceline05,"Aachen, Germania",23.0,5
-34,louise.b115,"Nantes, Francia",36.0,4.9
-35,yasminassem,"Pisa, Italia",2.0,5
-36,bishonn,"Marseille, Francia",35.0,4.7
-37,nessieb1983,"Waldaschaff, Germania",2.0,3
-38,kkae,"Amsterdam, Paesi Bassi",13.0,4.9
-39,mblesz92,Francia,64.0,4.2
-40,mickmanca,"Roma, Italia",17.0,4.8
-41,mlk243,"Saint-Gratien, Francia",106.0,4.7
-42,albertgui250393,"Le Beausset, Francia",39.0,5
-43,viennaqueen,"Wien, Josefstadt, Austria",27.0,4.9
-44,emiliasabi,"Cura Carpignano, Italia",44.0,4.9
-45,cartierjoanne,Francia,40.0,4.5
-46,pablomoreno886,"Albacete, Spagna",7.0,3.9
-47,discobold,"Amsterdam, Paesi Bassi",85.0,4.9
-48,antiseche,"Paris, Francia",45.0,4.9
-49,mlledesign,Francia,90.0,4.6
-50,kiymetcherie,Germania,91.0,4.9
-51,thibault06,"Saint-Laurent-du-Var, Francia",472.0,5
-52,mavuc,"Düsseldorf, Germania",164.0,5
-53,mgb_offline,Italia,109.0,4.9
+1,zesneakerss,Francia,116,4.9
+2,camille0475706706,"Seraing, Belgio",39,4.7
+4,shoppingmady,Germania,7,5
+5,jayp_1,"Noisy-le-Grand, Francia",5,5
+6,florencegarnier0312,"Lacanau, Francia",228,4.8
+8,nananaduah,"Amsterdam, Paesi Bassi",43,5
+9,milli3131,Spagna,15,5
+10,erena,"Berlin, Germania",173,5
+11,doraloula,"Gentilly, Francia",45,4.8
+12,michaeldescendre,"Gent, Belgio",483,4.9
+13,goldencomet,"Wavre, Belgio",391,4.9
+14,rene.slvtr,"Ihlow, Germania",20,5
+15,alinarodionova,"Paris, Francia",28,5
+16,dllouis,"Longwy, Francia",128,5
+17,mireia.cl,"Eliana, L', Spagna",11,5
+18,lsem02,"Milano, Italia",3,5
+20,yacinemakhlouf,Belgio,26,4.5
+21,milena.aaa,"Köln, Germania",109,4.9
+22,michellandmann,"Frankfurt am Main, Germania",9,5
+23,nesdogan,"Amsterdam, Paesi Bassi",30,4.9
+24,adelinebrtt,Francia,1440,4.9
+25,jeny1810,Francia,157,4.7
+26,elaenoel,"Aubagne, Francia",8,4.5
+27,siennagolle,"Rhode-Saint-Genèse, Belgio",46,4.7
+29,ramona40695,"Napoli, Italia",6,5
+30,tonygiunta24,"Messina, Italia",105,4.8
+31,jonathan_santos,"Hamburg, Germania",51,5
+32,alissabkm,Francia,128,4.9
+33,kiraceline05,"Aachen, Germania",23,5
+34,louise.b115,"Nantes, Francia",36,4.9
+35,yasminassem,"Pisa, Italia",2,5
+36,bishonn,"Marseille, Francia",35,4.7
+37,nessieb1983,"Waldaschaff, Germania",2,3
+38,kkae,"Amsterdam, Paesi Bassi",13,4.9
+39,mblesz92,Francia,64,4.2
+40,mickmanca,"Roma, Italia",17,4.8
+41,mlk243,"Saint-Gratien, Francia",106,4.7
+42,albertgui250393,"Le Beausset, Francia",39,5
+43,viennaqueen,"Wien, Josefstadt, Austria",27,4.9
+44,emiliasabi,"Cura Carpignano, Italia",44,4.9
+45,cartierjoanne,Francia,40,4.5
+46,pablomoreno886,"Albacete, Spagna",7,3.9
+47,discobold,"Amsterdam, Paesi Bassi",85,4.9
+48,antiseche,"Paris, Francia",45,4.9
+49,mlledesign,Francia,90,4.6
+50,kiymetcherie,Germania,91,4.9
+51,thibault06,"Saint-Laurent-du-Var, Francia",472,5
+52,mavuc,"Düsseldorf, Germania",164,5
+53,mgb_offline,Italia,109,4.9
