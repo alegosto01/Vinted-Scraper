@@ -95,8 +95,10 @@ def main():
     # scraper.complete_df_with_sigle_scrapes(search.mocassini_prada)
 
     # first_product_id = 0
+
+    non_really_sold_items_ids = []
     for i in range(10):
-        print(f"Round {2}")
+        print(f"Round {i}")
         for dictionary in search.programmed_searches:
             
             scraper = Scraper.Scraper()
@@ -119,14 +121,14 @@ def main():
             if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
                 print("not first search i call compare and save")
                 old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
-                scraper.compare_and_save_df_serial(new_df,old_df,input_search)
+                scraper.compare_and_save_df_serial(new_df,old_df,input_search, non_really_sold_items_ids)
             else:
                 old_df = new_df.copy()
                 old_df.reset_index(drop=True, inplace=True)  # This removes the old index
                 old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
                 print("first search csv created")
 
-        time.sleep(400)
+        time.sleep(20)
 
         # time.sleep(3600)
 
