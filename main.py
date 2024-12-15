@@ -97,6 +97,7 @@ def main():
     # first_product_id = 0
 
     non_really_sold_items_ids = []
+    print("hello")
     for i in range(10):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
