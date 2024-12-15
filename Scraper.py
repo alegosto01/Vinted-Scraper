@@ -117,7 +117,7 @@ class Scraper:
                 try:
                     html.render(timeout=20, sleep=10)  # Adjust sleep if needed to allow content to load
                     break  # Exit the loop if successful
-                except TimeoutError:
+                except:
                     retry_count += 1
                     print(f"Timeout occurred. Retrying {retry_count}/{max_retries}...")
                     time.sleep(15)  # Optional: Wait before retrying
@@ -662,44 +662,49 @@ class Scraper:
         
         print(f"len sold items {len(items_sold_to_check)}")
 
-        items_sold_to_check = [item for item in items_sold_to_check if item["Dataid"] not in non_really_sold_items_ids]
+        # items_sold_to_check = [item for item in items_sold_to_check if int(item["Dataid"]) not in non_really_sold_items_ids]
+
 
 
         for index, item in items_sold_to_check.iterrows():
-            url = item["Link"]
-            html_content = self.get_page_content(url)
-            if html_content:
-                try:
-                    element = html_content.find('div[data-testid="item-status--content"]', first=True)
-                    if element.text == "Venduto":
-                        items_to_fully_scrape.append(item)
-                        print("item sold for real")
-                        print(item)
-                except:
+            if int(item["Dataid"]) not in non_really_sold_items_ids:
+                url = item["Link"]
+                html_content = self.get_page_content(url)
+                if html_content:
+                    try:
+                        element = html_content.find('div[data-testid="item-status--content"]', first=True)
+                        if element.text == "Venduto":
+                            items_to_fully_scrape.append(item)
+                            print("item sold for real")
+                            print(item["Title"])
+                    except:
+                        old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
+                        non_really_sold_items_ids.append(int(item["Dataid"]))
+                        print("item not sold")
+                else:
                     old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
-                    non_really_sold_items_ids.append(item["Dataid"])
                     print("item not sold")
+                time.sleep(1)
             else:
-                old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
-                print("item not sold")
-            time.sleep(1)
+                print("item already checked and was not actually sold before")
 
 
         
         quick_sold_items_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_scarpe_donna.csv")
         seller_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv")
 
-        new_seller_rows = []        
+        new_seller_rows = []      
+        new_quick_sold_rows = []
+
         ## SCRAPE FULLY THE ITEMS JUST SOLD
         for item in items_to_fully_scrape:
             url = item["Link"]
             data_id = item["Dataid"]
             new_row, new_seller_row = self.scrape_single_product(url, data_id)
-            new_seller_rows.append(new_seller_row)
             
-            new_quick_sold_rows = []
 
-            if new_row and new_seller_row["ReviewCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
+            if new_row and new_seller_row["ReviewsCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
+                new_seller_rows.append(new_seller_row)
                 full_row = {
                     "Images": new_row["Images"],
                     "Interested_count": new_row["Interested_count"],
@@ -721,35 +726,37 @@ class Scraper:
                     "Page": item["Page"],   
                     "SearchCount": item["SearchCount"]
                 }
-                if new_row and full_row:
-                    max_id = seller_df["SellerId"].max()
-                    columns_seller = ["SellerId", "SellerName", "Location", "ReviewsCount", "Stars"]
+                new_quick_sold_rows.append(full_row)
 
-                    temp_seller_df = pd.DataFrame(new_seller_rows, columns=columns_seller)
-                    temp_seller_df.drop_duplicates(subset=["SellerName"], keep='first', inplace=True)
+    
+        max_id = seller_df["SellerId"].max()
+        columns_seller = ["SellerId", "SellerName", "Location", "ReviewsCount", "Stars"]
 
-                    #create a temporary df with the new rows
-                    columns = ["Images","Interested_count","View_count","Item_description","Condition","Upload_date","Dataid","SellerId","SellerName","Title","Price","Brand","Size","Link","Likes","MarketStatus","SearchDate","Page","SearchCount"]
-                    complementary_df = pd.DataFrame(new_quick_sold_rows, columns=columns)
+        temp_seller_df = pd.DataFrame(new_seller_rows, columns=columns_seller)
+        temp_seller_df.drop_duplicates(subset=["SellerName"], keep='first', inplace=True)
 
-                    for index, row in complementary_df.iterrows():  
-                        if row["SellerName"] in seller_df["SellerName"].values:
-                            seller_id = seller_df.loc[seller_df["SellerName"] == row["SellerName"], "SellerId"].values[0]
-                            complementary_df.at[index, "SellerId"] = seller_id  # Modify directly in DataFrame
-                            temp_seller_df.drop(temp_seller_df[temp_seller_df["SellerName"] == row["SellerName"]].index, inplace=True)
-                        else:
-                            max_id += 1
-                            complementary_df.at[index, "SellerId"] = max_id  # Modify directly in DataFrame
-                            temp_seller_df.loc[temp_seller_df["SellerName"] == row["SellerName"], "SellerId"] = max_id
+        #create a temporary df with the new rows
+        columns = ["Images","Interested_count","View_count","Item_description","Condition","Upload_date","Dataid","SellerId","SellerName","Title","Price","Brand","Size","Link","Likes","MarketStatus","SearchDate","Page","SearchCount"]
+        complementary_df = pd.DataFrame(new_quick_sold_rows, columns=columns)
 
-                #maybe this row can be removed
-                # df.reset_index(drop=True, inplace=True)  # This removes the old index
+        for index, row in complementary_df.iterrows():  
+            if row["SellerName"] in seller_df["SellerName"].values:
+                seller_id = seller_df.loc[seller_df["SellerName"] == row["SellerName"], "SellerId"].values[0]
+                complementary_df.at[index, "SellerId"] = seller_id  # Modify directly in DataFrame
+                temp_seller_df.drop(temp_seller_df[temp_seller_df["SellerName"] == row["SellerName"]].index, inplace=True)
+            else:
+                max_id += 1
+                complementary_df.at[index, "SellerId"] = max_id  # Modify directly in DataFrame
+                temp_seller_df.loc[temp_seller_df["SellerName"] == row["SellerName"], "SellerId"] = max_id
 
-                #add the temporary df with the new rows to the original df
-                # new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
-                # new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
-                
-                
+    #maybe this row can be removed
+    # df.reset_index(drop=True, inplace=True)  # This removes the old index
+
+    #add the temporary df with the new rows to the original df
+    # new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
+    # new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
+    
+    
         new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)
         new_seller_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv", index=False)            
         

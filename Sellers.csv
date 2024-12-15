@@ -1,42 +1,42 @@
 SellerId,SellerName,Location,ReviewsCount,Stars
 1,zesneakerss,Francia,116,4.9
 2,camille0475706706,"Seraing, Belgio",39,4.7
-4,shoppingmady,Germania,7,5
-5,jayp_1,"Noisy-le-Grand, Francia",5,5
+4,shoppingmady,Germania,7,5.0
+5,jayp_1,"Noisy-le-Grand, Francia",5,5.0
 6,florencegarnier0312,"Lacanau, Francia",228,4.8
-8,nananaduah,"Amsterdam, Paesi Bassi",43,5
-9,milli3131,Spagna,15,5
-10,erena,"Berlin, Germania",173,5
+8,nananaduah,"Amsterdam, Paesi Bassi",43,5.0
+9,milli3131,Spagna,15,5.0
+10,erena,"Berlin, Germania",173,5.0
 11,doraloula,"Gentilly, Francia",45,4.8
 12,michaeldescendre,"Gent, Belgio",483,4.9
 13,goldencomet,"Wavre, Belgio",391,4.9
-14,rene.slvtr,"Ihlow, Germania",20,5
-15,alinarodionova,"Paris, Francia",28,5
-16,dllouis,"Longwy, Francia",128,5
-17,mireia.cl,"Eliana, L', Spagna",11,5
-18,lsem02,"Milano, Italia",3,5
+14,rene.slvtr,"Ihlow, Germania",20,5.0
+15,alinarodionova,"Paris, Francia",28,5.0
+16,dllouis,"Longwy, Francia",128,5.0
+17,mireia.cl,"Eliana, L', Spagna",11,5.0
+18,lsem02,"Milano, Italia",3,5.0
 20,yacinemakhlouf,Belgio,26,4.5
 21,milena.aaa,"Köln, Germania",109,4.9
-22,michellandmann,"Frankfurt am Main, Germania",9,5
+22,michellandmann,"Frankfurt am Main, Germania",9,5.0
 23,nesdogan,"Amsterdam, Paesi Bassi",30,4.9
 24,adelinebrtt,Francia,1440,4.9
 25,jeny1810,Francia,157,4.7
 26,elaenoel,"Aubagne, Francia",8,4.5
 27,siennagolle,"Rhode-Saint-Genèse, Belgio",46,4.7
-29,ramona40695,"Napoli, Italia",6,5
+29,ramona40695,"Napoli, Italia",6,5.0
 30,tonygiunta24,"Messina, Italia",105,4.8
-31,jonathan_santos,"Hamburg, Germania",51,5
+31,jonathan_santos,"Hamburg, Germania",51,5.0
 32,alissabkm,Francia,128,4.9
-33,kiraceline05,"Aachen, Germania",23,5
+33,kiraceline05,"Aachen, Germania",23,5.0
 34,louise.b115,"Nantes, Francia",36,4.9
-35,yasminassem,"Pisa, Italia",2,5
+35,yasminassem,"Pisa, Italia",2,5.0
 36,bishonn,"Marseille, Francia",35,4.7
-37,nessieb1983,"Waldaschaff, Germania",2,3
+37,nessieb1983,"Waldaschaff, Germania",2,3.0
 38,kkae,"Amsterdam, Paesi Bassi",13,4.9
 39,mblesz92,Francia,64,4.2
 40,mickmanca,"Roma, Italia",17,4.8
 41,mlk243,"Saint-Gratien, Francia",106,4.7
-42,albertgui250393,"Le Beausset, Francia",39,5
+42,albertgui250393,"Le Beausset, Francia",39,5.0
 43,viennaqueen,"Wien, Josefstadt, Austria",27,4.9
 44,emiliasabi,"Cura Carpignano, Italia",44,4.9
 45,cartierjoanne,Francia,40,4.5
@@ -45,6 +45,12 @@ SellerId,SellerName,Location,ReviewsCount,Stars
 48,antiseche,"Paris, Francia",45,4.9
 49,mlledesign,Francia,90,4.6
 50,kiymetcherie,Germania,91,4.9
-51,thibault06,"Saint-Laurent-du-Var, Francia",472,5
-52,mavuc,"Düsseldorf, Germania",164,5
+51,thibault06,"Saint-Laurent-du-Var, Francia",472,5.0
+52,mavuc,"Düsseldorf, Germania",164,5.0
 53,mgb_offline,Italia,109,4.9
+54,giully22,Italia,58,4.9
+55,leyre410,"Zaragoza, Spagna",9,5.0
+56,katya1712,Italia,25,5.0
+57,nada66026,Spagna,318,4.8
+58,justmydressing,"Marseille 02, Francia",12,4.2
+59,rosemaryeva,"Romano d'Ezzelino, Italia",16,5
