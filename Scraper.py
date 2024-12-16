@@ -43,7 +43,7 @@ class Scraper:
     # def __init__(self):
         
     def init_driver(self):
-        extension_path = "/home/ale/Desktop/Vinted-Web-Scraper/proxy_auth_extension/proxy_auth_extension.zip"
+        extension_path = "proxy_auth_extension/proxy_auth_extension.zip"
 
         # Set up Chrome options with your preferences
         chrome_options = Options()
@@ -217,7 +217,7 @@ class Scraper:
         input_search = dictionary["search"]
 
         #set path to main forlder of the search
-        product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/"
+        product_root_folder = f"{dictionary['search']}/"
 
         # Create directories if they don't exist
         if not os.path.exists(product_root_folder):
@@ -325,7 +325,7 @@ class Scraper:
         input_search = dictionary["search"]
 
         #set path to main forlder of the search
-        product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/"
+        product_root_folder = f"{dictionary['search']}/"
 
         # Create directories if they don't exist
         if not os.path.exists(product_root_folder):
@@ -427,7 +427,7 @@ class Scraper:
     #scrape the specific web page of an item
     def scrape_single_product(self, url, data_id, get_images = False): #dictionary was a parameter
         #get path of the main folder of the search
-        # product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+        # product_root_folder = f"{dictionary['search']}"
         # self.driver = self.init_driver()
 
         html_content = self.get_page_content(url)
@@ -690,8 +690,8 @@ class Scraper:
 
 
         
-        quick_sold_items_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_scarpe_donna.csv")
-        seller_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv")
+        quick_sold_items_df = pd.read_csv(f"quick_sold_items_scarpe_donna.csv")
+        seller_df = pd.read_csv(f"Sellers.csv")
 
         new_seller_rows = []      
         new_quick_sold_rows = []
@@ -754,15 +754,15 @@ class Scraper:
 
     #add the temporary df with the new rows to the original df
     # new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
-    # new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
+    # new_df.to_csv(f"{dictionary['search']}/{dictionary['search']}.csv", index=False)
     
     
         new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)
-        new_seller_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv", index=False)            
+        new_seller_df.to_csv(f"Sellers.csv", index=False)            
         
         quick_sold_items_df = pd.concat([quick_sold_items_df, complementary_df], ignore_index=True)
 
-        quick_sold_items_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_scarpe_donna.csv", index=False)
+        quick_sold_items_df.to_csv(f"quick_sold_items_scarpe_donna.csv", index=False)
         
         print("Temp seller df:")
         print(temp_seller_df)
@@ -782,7 +782,7 @@ class Scraper:
             print("concateno il nuovo dataset")
             old_df = pd.concat([old_df, new_df], ignore_index=True)
             old_df = old_df.drop_duplicates(subset=["Link"], keep='first', inplace=False)
-            old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+            old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 
@@ -798,15 +798,15 @@ class Scraper:
             #     data_id = row["Dataid"]
             #     img_link = row["Image"]
             #     if(img_link != ""):
-            #         gen_func.ensure_path_exists(f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images')
-            #         gen_func.download_image(img_link, f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images/{data_id}')
+            #         gen_func.ensure_path_exists(f'{input_search}/{input_search} images')
+            #         gen_func.download_image(img_link, f'{input_search}/{input_search} images/{data_id}')
 
 
 
         # if not removed_items.empty:
         #     for row in removed_items:
-        #     last_row = gen_func.get_last_non_empty_row_excel(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/removed_items {input_search}.xlsx")
-        #     with pd.ExcelWriter(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/removed_items {input_search}.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+        #     last_row = gen_func.get_last_non_empty_row_excel(f"{input_search}/removed_items {input_search}.xlsx")
+        #     with pd.ExcelWriter(f"{input_search}/removed_items {input_search}.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
         #         removed_items.to_excel(writer, sheet_name='Sheet1', index=False, header=True, startrow= ++last_row)
         # else:
         #     print("nessun articolo è stato venduto")
@@ -829,7 +829,7 @@ class Scraper:
         # Save new items
         if not new_items.empty:
             old_df.append(new_df)
-            old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+            old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 
@@ -845,15 +845,15 @@ class Scraper:
             #     data_id = row["Dataid"]
             #     img_link = row["Image"]
             #     if(img_link != ""):
-            #         gen_func.ensure_path_exists(f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images')
-            #         gen_func.download_image(img_link, f'/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search} images/{data_id}')
+            #         gen_func.ensure_path_exists(f'{input_search}/{input_search} images')
+            #         gen_func.download_image(img_link, f'{input_search}/{input_search} images/{data_id}')
 
 
 
         # if not removed_items.empty:
         #     for row in removed_items:
-        #     last_row = gen_func.get_last_non_empty_row_excel(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/removed_items {input_search}.xlsx")
-        #     with pd.ExcelWriter(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/removed_items {input_search}.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+        #     last_row = gen_func.get_last_non_empty_row_excel(f"{input_search}/removed_items {input_search}.xlsx")
+        #     with pd.ExcelWriter(f"{input_search}/removed_items {input_search}.xlsx", engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
         #         removed_items.to_excel(writer, sheet_name='Sheet1', index=False, header=True, startrow= ++last_row)
         # else:
         #     print("nessun articolo è stato venduto")
@@ -864,9 +864,9 @@ class Scraper:
     #fill the database with additional data scraping every item's webpage
     def complete_df_with_sigle_scrapes(self, dictionary):
 
-        csv_path = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv"
+        csv_path = f"{dictionary['search']}/{dictionary['search']}.csv"
 
-        images_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images"
+        images_root_folder = f"{dictionary['search']}/{dictionary['search']} images"
         
         #read csv to modify it
         df = pd.read_csv(csv_path)
@@ -876,7 +876,7 @@ class Scraper:
         new_rows = []
         new_seller_rows = []
 
-        seller_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv"
+        seller_csv_path = "Sellers.csv"
         seller_df = pd.read_csv(seller_csv_path)
         
 
@@ -886,7 +886,7 @@ class Scraper:
             # print(f"row = {row['Images']}")
             #if images is empty means that the row doesn't have the complete info
             #also check that the folder is not created already, if it is we can skip it
-            # if pd.isna(row["Images"]) and not os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']} images/{row['Dataid']}"):
+            # if pd.isna(row["Images"]) and not os.path.exists(f"{dictionary['search']}/{dictionary['search']} images/{row['Dataid']}"):
             # if len(list(row["Images"])) == 0:
                 # self.driver = self.init_driver()
 
@@ -949,7 +949,7 @@ class Scraper:
 
         #add the temporary df with the new rows to the original df
         new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
-        new_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}/{dictionary['search']}.csv", index=False)
+        new_df.to_csv(f"{dictionary['search']}/{dictionary['search']}.csv", index=False)
         
         
         new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)

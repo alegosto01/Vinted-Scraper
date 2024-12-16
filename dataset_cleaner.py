@@ -5,7 +5,7 @@ import searches as search
 import shutil
 
 def remove_wrong_items(search):
-    images_path =os.path.join("/home/ale/Desktop/Vinted-Web-Scraper/", search["search"],search["search"] + " images") 
+    images_path =os.path.join("/", search["search"],search["search"] + " images") 
     # dataset = pd.read_excel(dataset_path)
     removed_images_path = images_path + " removed"
     for image in os.listdir(images_path):

@@ -100,7 +100,7 @@ def safe_get(driver, url, retries=3, delay=15):
 
 
 def download_all_images(image_urls, dictionary, data_id):
-    product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+    product_root_folder = f"{dictionary['search']}"
     for index, image_url in enumerate(image_urls):
         # image_url = image.get_attribute("src")
         print(f"Image {index + 1}: {image_url}")
@@ -117,7 +117,7 @@ def download_all_images(image_urls, dictionary, data_id):
 
 # def replace_names_with_ids(seller_csv, items_csv):
 
-#     seller_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/Sellers.csv"
+#     seller_csv_path = "Sellers.csv"
 #     seller_df = pd.read_csv(seller_csv)
 #     items_df = pd.read_csv(items_csv)
 

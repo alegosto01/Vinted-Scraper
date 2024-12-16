@@ -97,7 +97,6 @@ def main():
     # first_product_id = 0
 
     non_really_sold_items_ids = []
-    print("hello")
     for i in range(10):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
@@ -105,7 +104,7 @@ def main():
             scraper = Scraper.Scraper()
             print(f"search = {dictionary}")
             input_search = dictionary["search"]
-            product_root_folder = f"/home/ale/Desktop/Vinted-Web-Scraper/{dictionary['search']}"
+            product_root_folder = f"{dictionary['search']}"
 
             scraped_data = scraper.scrape_products_serial(dictionary, i)
             columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
@@ -119,14 +118,14 @@ def main():
 
 
             #if it doesn't exists means that is the first search ever
-            if os.path.exists(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv"):
+            if os.path.exists(f"{input_search}/{input_search}.csv"):
                 print("not first search i call compare and save")
-                old_df = pd.read_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv")
+                old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
                 scraper.compare_and_save_df_serial(new_df,old_df,input_search, non_really_sold_items_ids)
             else:
                 old_df = new_df.copy()
                 old_df.reset_index(drop=True, inplace=True)  # This removes the old index
-                old_df.to_csv(f"/home/ale/Desktop/Vinted-Web-Scraper/{input_search}/{input_search}.csv", index=False)
+                old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
                 print("first search csv created")
 
         time.sleep(20)
