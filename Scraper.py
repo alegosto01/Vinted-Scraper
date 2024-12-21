@@ -1,4 +1,5 @@
 from selenium.webdriver.common.by import By
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 import re
 import pandas as pd
@@ -15,14 +16,16 @@ import os
 import re
 from datetime import datetime
 from requests_html import HTMLSession
+import multiprocessing
 
 from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
 import csv
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from bs4 import BeautifulSoup
 
-
+import requests
 #scraping browser proxy
 AUTH = 'brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy'
 SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
@@ -77,7 +80,27 @@ class Scraper:
                 time.sleep(15)  # Wait before retrying
         print("Failed to load the page after multiple attempts.")
     
-    def get_page_content(self, url):
+    def get_page_content_quick(self, url):
+        payload = {
+            "zone": "web_unlocker1",             
+            "url": url,    # Target URL
+            "format": "html",                 # Raw HTML format
+            "method": "GET",                 # Use the GET method
+            "country": "IT"                  # Use a US-based proxy
+        }
+        headers = {
+            "Authorization": api_token,  # Replace with your actual API token
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.90 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.google.com/"  # or another referring URL if needed
+        }
+        response = requests.get(url, params=payload, headers=headers)
+        time.sleep(2)
+        if response.status_code == 200:
+            return BeautifulSoup(response.text, "html.parser")
+        return None
+    def get_page_content(self, url, timeout=20, sleep=10):
         # url = "https://www.vinted.it/catalog?search_text=air%20force%20men&time=1731608194"
 
         success = False
@@ -104,8 +127,8 @@ class Scraper:
             "Referer": "https://www.google.com/"  # or another referring URL if needed
         }
 
-        response = session.post(url, json=payload, headers=headers, timeout=30)
-
+        response = session.get(url, json=payload, headers=headers, timeout=40)
+        time.sleep(2)
         if response.status_code == 200:
             # Parse the HTML content from the response
             html = response.html
@@ -113,23 +136,43 @@ class Scraper:
             max_retries = 3
             retry_count = 0
 
-            while retry_count < max_retries:
-                try:
-                    html.render(timeout=20, sleep=10)  # Adjust sleep if needed to allow content to load
-                    break  # Exit the loop if successful
-                except:
-                    retry_count += 1
-                    print(f"Timeout occurred. Retrying {retry_count}/{max_retries}...")
-                    time.sleep(15)  # Optional: Wait before retrying
-            else:
-                print("Failed to render page after multiple retries.")
-                # Add fallback or exit logic
+            # while retry_count < max_retries:
+            try:
+                html.render(timeout=timeout, sleep=sleep)  # Adjust sleep if needed to allow content to load
+                # break  # Exit the loop if successful
+            except:
+                retry_count += 1
+                print(f"Timeout occurred. Retrying {retry_count}/{max_retries}...")
+                # time.sleep(15)  # Optional: Wait before retrying
+            # else:
+            #     print("Failed to render page after multiple retries.")
+            #     # Add fallback or exit logic
             if html:
                 success = True    
                 return html
+            else:
+                print("page not loaded")
+                return None
         else:
             print("Failed to retrieve the page:", response.status_code)
-            print("Response message:", response.text)
+            print("Response message:", response.text[:20])  # Print the first 500 characters of the response
+    
+    def fetch_page_and_check(self,item, non_really_sold_items_ids):
+        try:
+            # if int(item["Dataid"]) in non_really_sold_items_ids:
+            #     return item, False, "AlreadyChecked"
+            url = item["Link"]
+            html_content = self.get_page_content(url, timeout=60, sleep=25)
+
+            if html_content:
+                element = html_content.find('div[data-testid="item-status--content"]', first=True)
+                if element and element.text == "Venduto":
+                    return item, True, "Sold"
+            time.sleep(7)
+            return item, False, "On Sale"
+        except Exception:
+            time.sleep(3)
+            return item, False, "On Sale"
         
     # create the url setting all the filters of the search
     def create_webpage(self, dictionary): 
@@ -237,7 +280,7 @@ class Scraper:
             new_webpage = webpage + "&page=" + str(page+1)
             print(f"im searching in {new_webpage}")
 
-            html_content = self.get_page_content(new_webpage)
+            html_content = self.get_page_content(new_webpage, timeout=20, sleep=10)
 
             try:
                 element = html_content.find('meta[content="Una community, migliaia di brand e tantissimo stile second-hand. Ti va di iniziare? Ecco come funziona."]', first=True)
@@ -340,11 +383,11 @@ class Scraper:
         #loop through all the pages available
         page = 0
 
-        for i in range(100000):
+        for i in range(10):
             new_webpage = webpage + "&page=" + str(page+1)
             print(f"im searching in {new_webpage}")
 
-            html_content = self.get_page_content(new_webpage)
+            html_content = self.get_page_content(new_webpage, timeout=20, sleep=10)
 
             try:
                 element = html_content.find('meta[content="Una community, migliaia di brand e tantissimo stile second-hand. Ti va di iniziare? Ecco come funziona."]', first=True)
@@ -430,7 +473,7 @@ class Scraper:
         # product_root_folder = f"{dictionary['search']}"
         # self.driver = self.init_driver()
 
-        html_content = self.get_page_content(url)
+        html_content = self.get_page_content(url, timeout=40, sleep=20)
         if html_content is None:
             return [], []
         page_exists = True
@@ -459,50 +502,74 @@ class Scraper:
                 print("PAGE FAILED TO LOAD")
                 reviews_count = 0
 
+            # try:
             try:
                 stars_element = html_content.find("div[class='web_ui__Rating__rating web_ui__Rating__small']", first=True)
-                stars = stars_element.attrs.get("aria-label").split(" ")[2]
-                # stars = self.driver.find_elements(By.XPATH, "//div[@class='web_ui__Rating__star web_ui__Rating__full']")
+                stars_text = stars_element.attrs.get("aria-label").split(" ")
+                if len(stars_text) == 10:
+                    stars = stars_element.attrs.get("aria-label").split(" ")[6]
+                else:
+                    stars = stars_element.attrs.get("aria-label").split(" ")[2]
+            except:
+                stars = -1
+            # stars = self.driver.find_elements(By.XPATH, "//div[@class='web_ui__Rating__star web_ui__Rating__full']")
 
+            try:
                 #get location
                 location_element = html_content.find("div.details-list__item-value[itemprop='location']", first=True)
                 location = location_element.text if location_element else None            
                 # location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
 
+            except:
+                location = "Unknown"
+
+            try:
                 #get views
                 views_count_element = html_content.find("div.details-list__item-value[itemprop='view_count']", first=True)
                 views_count = int(views_count_element.text) if views_count_element else None  
                 # views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
+            except:
+                views_count = -1
+            
+            
+            #get interested people
+            try:
+                interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
+                interested_count = int(interested_count_element.text.split(" ")[0]) if interested_count_element else None  
+                # interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
+            except:
+                interested_count = -1
 
-                #get interested people
-                interested_count = 0
-                try:
-                    interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
-                    interested_count = int(interested_count_element.text.split(" ")[0]) if interested_count_element else None  
-                    # interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
-                except:
-                    pass
-
-
+            try:
                 #get upload date
                 upload_date = " ".join(
                     html_content.find("div.details-list__item-value[itemprop='upload_date']", first=True).text.split()[:-1]
                     # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
                     )
-                
+            except:
+                upload_date = "Unknown"
+            
+            try:
                 #get item description
                 item_description = html_content.find("span[class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']", first=True).text
                 # item_description = self.driver.find_element(By.XPATH, "//span[@class='web_ui__Text__text web_ui__Text__body web_ui__Text__left web_ui__Text__format']").text
-
- 
+            except:
+                item_description = "Unknown"
+            try:
                 #get seller name
                 seller_name = html_content.find(f"span[data-testid*='profile-username']", first=True).text
             except:
-                print("problem finding something")
-                return [], []
+                seller_name = "Unknown"
+            # except:
+            #     print("problem finding something")
+            #     return [], []
             
-            item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
-            item_condition = item_condition_element.find("div[class='details-list__item-value']", first=True).text
+            try:
+                item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
+                item_condition = item_condition_element.find("div[class='details-list__item-value']", first=True).text
+            except:
+                item_condition = "Unknown"
+
             print(f"condition = {item_condition}")
             new_seller_row = {
                     "SellerId": " ",
@@ -638,10 +705,9 @@ class Scraper:
             
             if rows_to_drop.empty:
                 print("No rows to drop, breaking to avoid infinite loop.")
-                break
-            
-            old_df = old_df.drop(rows_to_drop.index)
-            print(f"After drop: LEN = {len(old_df)}")
+            else:        
+                old_df = old_df.drop(rows_to_drop.index)
+                print(f"After drop: LEN = {len(old_df)}")
             
             if max_pag == 1:
                 min_search += 1
@@ -657,46 +723,81 @@ class Scraper:
 
         ## check if they are actually sold or just not found
 
+        quick_sold_items_df = pd.read_csv(f"quick_sold_items_scarpe_donna.csv")
+
+
 
         items_sold_to_check = old_df.loc[old_df["MarketStatus"] == "Sold"]
+
+        # items_sold_to_check = [item for item in items_sold_to_check.ite if int(item["Dataid"]) not in non_really_sold_items_ids]
+        
+        items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(non_really_sold_items_ids)]
+        items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(list(quick_sold_items_df["Dataid"].values))]
+
+        # items_sold_to_check = [item for item in items_sold_to_check if int(item["Dataid"]) not in list(quick_sold_items_df["Dataid"].values)]
+
         
         print(f"len sold items {len(items_sold_to_check)}")
 
         # items_sold_to_check = [item for item in items_sold_to_check if int(item["Dataid"]) not in non_really_sold_items_ids]
 
+        # for index, item in items_sold_to_check.iterrows():
+        #     if int(item["Dataid"]) not in non_really_sold_items_ids:
+        #         url = item["Link"]
+        #         html_content = self.get_page_content_quick(url)
+        #         if html_content:
+        #             print("page loaded")
+        #             try:
+        #                 element = html_content.find('div[data-testid="item-status--content"]', first=True)
+        #                 if element.text == "Venduto":
+        #                     items_to_fully_scrape.append(item)
+        #                     print("item sold for real")
+        #                     print(item["Title"])
+        #             except:
+        #                 old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
+        #                 non_really_sold_items_ids.add(int(item["Dataid"]))
+        #                 print("item not sold")
+        #         else:
+        #             old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
+        #             print("item not sold")
+        #         time.sleep(1)
+        #     else:
+        #         print("item already checked and was not actually sold before")
 
+        # Parallel execution
+        items_to_fully_scrape = []
+        non_really_sold_items_ids = []
 
-        for index, item in items_sold_to_check.iterrows():
-            if int(item["Dataid"]) not in non_really_sold_items_ids:
-                url = item["Link"]
-                html_content = self.get_page_content(url)
-                if html_content:
-                    try:
-                        element = html_content.find('div[data-testid="item-status--content"]', first=True)
-                        if element.text == "Venduto":
-                            items_to_fully_scrape.append(item)
-                            print("item sold for real")
-                            print(item["Title"])
-                    except:
-                        old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
-                        non_really_sold_items_ids.append(int(item["Dataid"]))
-                        print("item not sold")
+        max_workers = min(8, multiprocessing.cpu_count())
+
+        with ThreadPoolExecutor(max_workers=8) as executor:  # Adjust max_workers based on system/network capacity
+            futures = [executor.submit(self.fetch_page_and_check, row, non_really_sold_items_ids)
+                    for _, row in items_sold_to_check.iterrows()]
+
+            for future in as_completed(futures):
+                item, sold, status = future.result()
+                if sold:
+                    items_to_fully_scrape.append(item)
+                    print(f"Item sold for real: {item['Title']} + {item['Link']}")
                 else:
-                    old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
-                    print("item not sold")
-                time.sleep(1)
-            else:
-                print("item already checked and was not actually sold before")
+                    if status == "On Sale":
+                        non_really_sold_items_ids.append(int(item["Dataid"]))
+                        old_df.loc[old_df["Link"] == item["Link"], "MarketStatus"] = "On Sale"
+                    print(f"Item not sold: {item['Title']}")
 
+        print("Parallel scraping complete.")
 
         
-        quick_sold_items_df = pd.read_csv(f"quick_sold_items_scarpe_donna.csv")
         seller_df = pd.read_csv(f"Sellers.csv")
 
         new_seller_rows = []      
         new_quick_sold_rows = []
 
+
         ## SCRAPE FULLY THE ITEMS JUST SOLD
+        # for item in items_to_fully_scrape:
+
+        print(f"Items to fully scrape: {len(items_to_fully_scrape)}")
         for item in items_to_fully_scrape:
             url = item["Link"]
             data_id = item["Dataid"]
@@ -704,6 +805,7 @@ class Scraper:
             
 
             if new_row and new_seller_row["ReviewsCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
+                print("new row added")
                 new_seller_rows.append(new_seller_row)
                 full_row = {
                     "Images": new_row["Images"],
@@ -727,6 +829,10 @@ class Scraper:
                     "SearchCount": item["SearchCount"]
                 }
                 new_quick_sold_rows.append(full_row)
+            else:
+                print("seller not good enough")
+                old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
+                non_really_sold_items_ids.append(int(data_id))
 
     
         max_id = seller_df["SellerId"].max()
