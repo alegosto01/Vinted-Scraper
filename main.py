@@ -96,8 +96,8 @@ def main():
 
     # first_product_id = 0
 
-    non_really_sold_items_ids = []
-    for i in range(10):
+    non_really_sold_items_ids = set()
+    for i in range(20):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
             
@@ -128,7 +128,7 @@ def main():
                 old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
                 print("first search csv created")
 
-        time.sleep(20)
+        time.sleep(10)
 
         # time.sleep(3600)
 
