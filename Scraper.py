@@ -162,13 +162,14 @@ class Scraper:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
             #     return item, False, "AlreadyChecked"
             url = item["Link"]
-            html_content = self.get_page_content(url, timeout=60, sleep=25)
+            html_content = self.get_page_content(url, timeout=60, sleep=30)
+            time.sleep(2)
 
             if html_content:
                 element = html_content.find('div[data-testid="item-status--content"]', first=True)
                 if element and element.text == "Venduto":
                     return item, True, "Sold"
-            time.sleep(7)
+            time.sleep(5)
             return item, False, "On Sale"
         except Exception:
             time.sleep(3)
@@ -387,7 +388,7 @@ class Scraper:
             new_webpage = webpage + "&page=" + str(page+1)
             print(f"im searching in {new_webpage}")
 
-            html_content = self.get_page_content(new_webpage, timeout=20, sleep=10)
+            html_content = self.get_page_content(new_webpage, timeout=25, sleep=5)
 
             try:
                 element = html_content.find('meta[content="Una community, migliaia di brand e tantissimo stile second-hand. Ti va di iniziare? Ecco come funziona."]', first=True)
@@ -494,6 +495,7 @@ class Scraper:
 
             print("PAge EXISTS")            
             #get reviews count and star rating
+            time.sleep(2)
             try:
                 reviews_element = html_content.find("div[class='web_ui__Rating__rating web_ui__Rating__small']", first=True).text
                 # reviews_element = html_content.find("h4[class='web_ui__Text__text web_ui__Text__caption web_ui__Text__left']").text
@@ -516,7 +518,7 @@ class Scraper:
 
             try:
                 #get location
-                location_element = html_content.find("div.details-list__item-value[itemprop='location']", first=True)
+                location_element = html_content.find("div.details-list__item-value--redesign[itemprop='location']", first=True)
                 location = location_element.text if location_element else None            
                 # location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
 
@@ -525,7 +527,7 @@ class Scraper:
 
             try:
                 #get views
-                views_count_element = html_content.find("div.details-list__item-value[itemprop='view_count']", first=True)
+                views_count_element = html_content.find("div.details-list__item-value--redesign[itemprop='view_count']", first=True)
                 views_count = int(views_count_element.text) if views_count_element else None  
                 # views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
             except:
@@ -534,7 +536,7 @@ class Scraper:
             
             #get interested people
             try:
-                interested_count_element = html_content.find("div.details-list__item-value[itemprop='interested']", first=True)
+                interested_count_element = html_content.find("div.details-list__item-value--redesign[itemprop='interested']", first=True)
                 interested_count = int(interested_count_element.text.split(" ")[0]) if interested_count_element else None  
                 # interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
             except:
@@ -543,7 +545,7 @@ class Scraper:
             try:
                 #get upload date
                 upload_date = " ".join(
-                    html_content.find("div.details-list__item-value[itemprop='upload_date']", first=True).text.split()[:-1]
+                    html_content.find("div.details-list__item-value--redesign[itemprop='upload_date']", first=True).text.split()[:-1]
                     # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
                     )
             except:
@@ -566,7 +568,7 @@ class Scraper:
             
             try:
                 item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
-                item_condition = item_condition_element.find("div[class='details-list__item-value']", first=True).text
+                item_condition = item_condition_element.find("div[class='details-list__item-value--redesign']", first=True).text
             except:
                 item_condition = "Unknown"
 

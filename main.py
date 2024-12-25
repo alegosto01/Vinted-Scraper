@@ -97,6 +97,17 @@ def main():
     # first_product_id = 0
 
     non_really_sold_items_ids = set()
+    path = "/home/ale/Desktop/Vinted-Web-Scraper/ / .csv"
+    big_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv.csv"
+
+    if os.path.exists(path):
+        df = pd.read_csv(path)
+        big_df = pd.read_csv(big_csv_path)
+
+        new_df = pd.concat([df, big_df], ignore_index=True)
+
+        new_df.to_csv(big_csv_path)
+
     for i in range(20):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
