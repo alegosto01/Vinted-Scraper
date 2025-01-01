@@ -157,22 +157,22 @@ class Scraper:
             print("Failed to retrieve the page:", response.status_code)
             print("Response message:", response.text[:20])  # Print the first 500 characters of the response
     
-    def fetch_page_and_check(self,item, non_really_sold_items_ids):
+    def fetch_page_and_check(self,item):
+        time.sleep(10)
         try:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
             #     return item, False, "AlreadyChecked"
             url = item["Link"]
             html_content = self.get_page_content(url, timeout=60, sleep=30)
-            time.sleep(2)
 
             if html_content:
                 element = html_content.find('div[data-testid="item-status--content"]', first=True)
                 if element and element.text == "Venduto":
                     return item, True, "Sold"
-            time.sleep(5)
+            # time.sleep(5)
             return item, False, "On Sale"
         except Exception:
-            time.sleep(3)
+            # time.sleep(3)
             return item, False, "On Sale"
         
     # create the url setting all the filters of the search
@@ -192,7 +192,7 @@ class Scraper:
             color_list = dictionary["colore"].split("-")
             color_ids = f.find_color_ids(color_list)
             for color_id in color_ids:
-                color_search = color_search + "&color_ids[]=" + color_id
+                color_search = color_search + "&color_ids[]=" + str(color_id)
 
         #set brand list
         brands_search = ""
@@ -413,8 +413,8 @@ class Scraper:
             #if the page has 0 products mean that we can stop scraping
             print(f"len products = {len(products)}")
 
-            if len(products) == 0:
-                last_page = True
+            if len(products) == 0 and page < 10:
+                break
 
             #get all the data from the products
             for product in products:
@@ -650,22 +650,7 @@ class Scraper:
         return image_urls
 
     def compare_and_save_df_serial(self, new_df, old_df, input_search, non_really_sold_items_ids):
-
         print("in compare and save")
-        # Identifying new items
-        # old_df['Link'] = old_df['Link'].astype(str).str.strip()
-        # new_df['Link'] = new_df['Link'].astype(str).str.strip()
-
-
-        # new_df = new_df.loc[~(new_df['Link']).isin(old_df['Link'])]
-        # old_df.loc[~(old_df['Link']).isin(new_df['Link']), 'MarketStatus'] = 'Sold'
-
-        ############### above old approach, doesn't work########
-
-
-        ############ ????should i mark the new items as new ???????#########
-        # new_df.loc[:, "MarketStatus"] = "New"
-
 
         link_list_old = list(old_df["Link"].values)
         link_list_new = list(new_df["Link"].values)
@@ -679,14 +664,13 @@ class Scraper:
 
 
         print("dropped dubpliactes and updates search date")
+         
+        if len(new_df) > 100:
+            new_df = new_df[:100]
+        
         new_items_count = len(new_df)
-
-        # for index, row in old_df.iterrows():
-        #     if row["MarketStatus"] != "OutOfSearch":
-                # if row["MarketStatus"] == "On Sale":
-                    
+          
         items_sold_to_check = []
-
 
         for link in link_list_old:
             if link not in link_list_new:
@@ -717,31 +701,26 @@ class Scraper:
             else:
                 max_pag -= 1
             
-
         print("dropped outofsearch items")
 
-
         items_to_fully_scrape = []
-
         ## check if they are actually sold or just not found
 
         quick_sold_items_df = pd.read_csv(f"quick_sold_items_scarpe_donna.csv")
 
-
-
         items_sold_to_check = old_df.loc[old_df["MarketStatus"] == "Sold"]
 
-        # items_sold_to_check = [item for item in items_sold_to_check.ite if int(item["Dataid"]) not in non_really_sold_items_ids]
+        if len(items_sold_to_check) > 0:
+            print(f"Before removing non really sold {len(items_sold_to_check)}")
+            items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(non_really_sold_items_ids)]
+            print(f"After removing non really sold {len(items_sold_to_check)}")
+            items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(list(quick_sold_items_df["Dataid"].values))]
         
-        items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(non_really_sold_items_ids)]
-        items_sold_to_check = items_sold_to_check[~items_sold_to_check['Dataid'].isin(list(quick_sold_items_df["Dataid"].values))]
 
-        # items_sold_to_check = [item for item in items_sold_to_check if int(item["Dataid"]) not in list(quick_sold_items_df["Dataid"].values)]
-
+        if len(items_sold_to_check) > 80:
+            items_sold_to_check = items_sold_to_check.iloc[:80]
         
         print(f"len sold items {len(items_sold_to_check)}")
-
-        # items_sold_to_check = [item for item in items_sold_to_check if int(item["Dataid"]) not in non_really_sold_items_ids]
 
         # for index, item in items_sold_to_check.iterrows():
         #     if int(item["Dataid"]) not in non_really_sold_items_ids:
@@ -768,12 +747,11 @@ class Scraper:
 
         # Parallel execution
         items_to_fully_scrape = []
-        non_really_sold_items_ids = []
 
         max_workers = min(8, multiprocessing.cpu_count())
 
-        with ThreadPoolExecutor(max_workers=8) as executor:  # Adjust max_workers based on system/network capacity
-            futures = [executor.submit(self.fetch_page_and_check, row, non_really_sold_items_ids)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:  # Adjust max_workers based on system/network capacity
+            futures = [executor.submit(self.fetch_page_and_check, row)
                     for _, row in items_sold_to_check.iterrows()]
 
             for future in as_completed(futures):
@@ -783,29 +761,22 @@ class Scraper:
                     print(f"Item sold for real: {item['Title']} + {item['Link']}")
                 else:
                     if status == "On Sale":
-                        non_really_sold_items_ids.append(int(item["Dataid"]))
+                        non_really_sold_items_ids.add(int(item["Dataid"]))
                         old_df.loc[old_df["Link"] == item["Link"], "MarketStatus"] = "On Sale"
                     print(f"Item not sold: {item['Title']}")
 
         print("Parallel scraping complete.")
 
-        
         seller_df = pd.read_csv(f"Sellers.csv")
-
         new_seller_rows = []      
         new_quick_sold_rows = []
-
-
-        ## SCRAPE FULLY THE ITEMS JUST SOLD
-        # for item in items_to_fully_scrape:
 
         print(f"Items to fully scrape: {len(items_to_fully_scrape)}")
         for item in items_to_fully_scrape:
             url = item["Link"]
             data_id = item["Dataid"]
-            new_row, new_seller_row = self.scrape_single_product(url, data_id)
+            new_row, new_seller_row = self.scrape_single_product(url, data_id, get_images=True)
             
-
             if new_row and new_seller_row["ReviewsCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
                 print("new row added")
                 new_seller_rows.append(new_seller_row)
@@ -834,7 +805,7 @@ class Scraper:
             else:
                 print("seller not good enough")
                 old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
-                non_really_sold_items_ids.append(int(data_id))
+                non_really_sold_items_ids.add(int(data_id))
 
     
         max_id = seller_df["SellerId"].max()
@@ -869,7 +840,6 @@ class Scraper:
         new_seller_df.to_csv(f"Sellers.csv", index=False)            
         
         quick_sold_items_df = pd.concat([quick_sold_items_df, complementary_df], ignore_index=True)
-
         quick_sold_items_df.to_csv(f"quick_sold_items_scarpe_donna.csv", index=False)
         
         print("Temp seller df:")
@@ -938,6 +908,7 @@ class Scraper:
         if not new_items.empty:
             old_df.append(new_df)
             old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+            print(f"New Items: {new_df}")
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 
