@@ -54,6 +54,15 @@ scarpe_donna = {"search":" ",
                "sort":"newest_first",
                "category": "Donna/Scarpe"}
 
+search_fedi_santi = {"search":"Converse all star chuck taylor",
+               "prezzoDa":"15",
+               "prezzoA":"33",
+               "condition":" ",
+               "colore":"nero",
+               "brands":" ",
+               "sort":"newest_first",
+               "category": " "}
+
 
 programmed_searches = [scarpe_donna]
 

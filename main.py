@@ -80,7 +80,8 @@ from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnecti
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 import sys
 import requests
-import filters
+import shutil
+
 # SBR_WEBDRIVER = f'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225'
 
 AUTH = 'brd-customer-hl_c6889560-zone-scraping_browser1:wu62tqar4piy'
@@ -96,6 +97,48 @@ def main():
 
     # first_product_id = 0
 
+#     print("ricerca fedi santi")
+
+#     dictionary = search.search_fedi_santi
+
+#     scraper = Scraper.Scraper()
+#     print(f"search = {dictionary}")
+#     input_search = dictionary["search"]
+
+#     scraped_data = scraper.scrape_products(dictionary)
+#     columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+# 'MarketStatus', 'SearchDate', 'Images']
+#     new_df = pd.DataFrame(scraped_data, columns=columns)
+
+
+#     # if i == 0:
+#     #     first_product_id = new_df['Dataid'].iloc[-1]
+#     #     print(f"First product id = {first_product_id}")
+
+
+#     #if it doesn't exists means that is the first search ever
+#     if os.path.exists(f"{input_search}/{input_search}.csv"):
+#         print("not first search i call compare and save")
+#         old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
+#         scraper.compare_and_save_df(new_df,old_df,input_search)
+#     else:
+#         old_df = new_df.copy()
+#         old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+#         old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+#         print("first search csv created")
+
+
+
+    #initialize the output.txt file
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
+
+    print(f"Date : {datetime.today}")
+
+    sys.stdout = sys.__stdout__
+    output_file.close()
+
+
     non_really_sold_items_ids = set()
     path = "/home/ale/Desktop/Vinted-Web-Scraper/ / .csv"
     big_csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv.csv"
@@ -104,46 +147,80 @@ def main():
         df = pd.read_csv(path)
         big_df = pd.read_csv(big_csv_path)
 
+        # df.reset_index(drop=True, inplace=True)
+        # big_df.reset_index(drop=True, inplace=True)
+
         new_df = pd.concat([df, big_df], ignore_index=True)
+        new_df.to_csv(big_csv_path, index=False)
 
-        new_df.to_csv(big_csv_path)
+        try:
+            shutil.rmtree("/home/ale/Desktop/Vinted-Web-Scraper/ /")
+        except:
+            pass
 
-    for i in range(20):
+    for i in range(40):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
-            
-            scraper = Scraper.Scraper()
-            print(f"search = {dictionary}")
-            input_search = dictionary["search"]
-            product_root_folder = f"{dictionary['search']}"
+                # Redirect sys.stdout to the file
+            output_file = open("output.txt", "a")
 
-            scraped_data = scraper.scrape_products_serial(dictionary, i)
-            columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
-    'MarketStatus', 'SearchDate', 'Images', "SearchCount", "Page"]
-            new_df = pd.DataFrame(scraped_data, columns=columns)
+            sys.stdout = output_file
 
+            scrape_for_quick_items(dictionary, i, non_really_sold_items_ids)
 
-            # if i == 0:
-            #     first_product_id = new_df['Dataid'].iloc[-1]
-            #     print(f"First product id = {first_product_id}")
+            sys.stdout = sys.__stdout__
 
+            # Close the file
+            output_file.close()
 
-            #if it doesn't exists means that is the first search ever
-            if os.path.exists(f"{input_search}/{input_search}.csv"):
-                print("not first search i call compare and save")
-                old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
-                scraper.compare_and_save_df_serial(new_df,old_df,input_search, non_really_sold_items_ids)
-            else:
-                old_df = new_df.copy()
-                old_df.reset_index(drop=True, inplace=True)  # This removes the old index
-                old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
-                print("first search csv created")
+            # After restoring, this will print to the console again
+            print("This will be printed on the console.")
 
         time.sleep(10)
 
         # time.sleep(3600)
+def get_images_forgotten(path):
+    df = pd.read_csv(path)
+    scraper = Scraper.Scraper()
+    for index, row in df.iterrows():
+        row["Images"] = scraper.get_all_product_images()
 
+def get_sold_items_slow(path):
+    df = pd.read_csv(path)
 
+def download_all_images(path):
+    root_folder = "/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_images/"
+    df = pd.read_csv(path)
+    for index, row in df.iterrows():
+        print(f"Index: {index}")
+        for index, image_url in enumerate(row["Images"]):
+            print(f"Image {index + 1}: {image_url}")
+            folder_path = os.path.join(root_folder,str(row["Dataid"]))
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+            gen_func.download_image(image_url, os.path.join(folder_path,str(index)))
+
+def scrape_for_quick_items(dictionary, i, non_really_sold_items_ids):
+    scraper = Scraper.Scraper()
+    print(f"search = {dictionary}")
+    input_search = dictionary["search"]
+    # product_root_folder = f"{dictionary['search']}"
+
+    scraped_data = scraper.scrape_products_serial(dictionary, i)
+    columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+'MarketStatus', 'SearchDate', 'Images', "SearchCount", "Page"]
+    new_df = pd.DataFrame(scraped_data, columns=columns)
+
+    #if it doesn't exists means that is the first search ever
+    if os.path.exists(f"{input_search}/{input_search}.csv"):
+        print("not first search i call compare and save")
+        old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
+        scraper.compare_and_save_df_serial(new_df,old_df,input_search, non_really_sold_items_ids)
+    else:
+        old_df = new_df.copy()
+        old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+        old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+        print("first search csv created")
 
 
 
