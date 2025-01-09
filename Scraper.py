@@ -775,7 +775,7 @@ class Scraper:
         for item in items_to_fully_scrape:
             url = item["Link"]
             data_id = item["Dataid"]
-            new_row, new_seller_row = self.scrape_single_product(url, data_id, get_images=True)
+            new_row, new_seller_row = self.scrape_single_product(url, data_id, get_images=False)
             
             if new_row and new_seller_row["ReviewsCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
                 print("new row added")
