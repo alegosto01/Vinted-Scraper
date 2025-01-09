@@ -80,7 +80,7 @@ def calculate_images_blur_stats(folder_path):
     return statistics
 
 
-calculate_images_blur_stats("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/")
+# calculate_images_blur_stats("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/")
 
 # for image in os.listdir("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche images"):
 #     file_path = os.path.join("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche images/", image)
