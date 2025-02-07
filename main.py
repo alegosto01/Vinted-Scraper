@@ -81,6 +81,10 @@ from selenium.webdriver.common.proxy import Proxy, ProxyType
 import sys
 import requests
 import shutil
+import tracemalloc
+import ast
+import getpass
+
 
 # SBR_WEBDRIVER = f'http://brd-customer-hl_c6889560-zone-datacenter_proxy1:9rg06kk55uec@brd.superproxy.io:22225'
 
@@ -89,6 +93,11 @@ SBR_WEBDRIVER = f'https://{AUTH}@zproxy.lum-superproxy.io:9515'
 
 
 def main():
+
+    # get_images_forgotten("/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_scarpe_donna.csv")
+    
+    # download_all_images("/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_scarpe_donna.csv")
+    
     # scraper.get_page_content("https://www.vinted.it/")
 
     # scraper = Scraper.Scraper()
@@ -97,46 +106,46 @@ def main():
 
     # first_product_id = 0
 
-#     print("ricerca fedi santi")
+# #     print("ricerca fedi santi")
 
-#     dictionary = search.search_fedi_santi
+# #     dictionary = search.search_fedi_santi
 
-#     scraper = Scraper.Scraper()
-#     print(f"search = {dictionary}")
-#     input_search = dictionary["search"]
+# #     scraper = Scraper.Scraper()
+# #     print(f"search = {dictionary}")
+# #     input_search = dictionary["search"]
 
-#     scraped_data = scraper.scrape_products(dictionary)
-#     columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
-# 'MarketStatus', 'SearchDate', 'Images']
-#     new_df = pd.DataFrame(scraped_data, columns=columns)
-
-
-#     # if i == 0:
-#     #     first_product_id = new_df['Dataid'].iloc[-1]
-#     #     print(f"First product id = {first_product_id}")
+# #     scraped_data = scraper.scrape_products(dictionary)
+# #     columns = ['Title', 'Price', 'Brand', 'Size', 'Link', 'Likes', 'Dataid',
+# # 'MarketStatus', 'SearchDate', 'Images']
+# #     new_df = pd.DataFrame(scraped_data, columns=columns)
 
 
-#     #if it doesn't exists means that is the first search ever
-#     if os.path.exists(f"{input_search}/{input_search}.csv"):
-#         print("not first search i call compare and save")
-#         old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
-#         scraper.compare_and_save_df(new_df,old_df,input_search)
-#     else:
-#         old_df = new_df.copy()
-#         old_df.reset_index(drop=True, inplace=True)  # This removes the old index
-#         old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
-#         print("first search csv created")
+# #     # if i == 0:
+# #     #     first_product_id = new_df['Dataid'].iloc[-1]
+# #     #     print(f"First product id = {first_product_id}")
 
 
+# #     #if it doesn't exists means that is the first search ever
+# #     if os.path.exists(f"{input_search}/{input_search}.csv"):
+# #         print("not first search i call compare and save")
+# #         old_df = pd.read_csv(f"{input_search}/{input_search}.csv")
+# #         scraper.compare_and_save_df(new_df,old_df,input_search)
+# #     else:
+# #         old_df = new_df.copy()
+# #         old_df.reset_index(drop=True, inplace=True)  # This removes the old index
+# #         old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+# #         print("first search csv created")
+
+###############################################################################
 
     #initialize the output.txt file
-    output_file = open("output.txt", "w")
-    sys.stdout = output_file
+    # output_file = open("output.txt", "w")
+    # sys.stdout = output_file
 
     print(f"Date : {datetime.today}")
 
-    sys.stdout = sys.__stdout__
-    output_file.close()
+    # sys.stdout = sys.__stdout__
+    # output_file.close()
 
 
     non_really_sold_items_ids = set()
@@ -157,48 +166,91 @@ def main():
             shutil.rmtree("/home/ale/Desktop/Vinted-Web-Scraper/ /")
         except:
             pass
+    times = []
 
-    for i in range(40):
+    for i in range(10):
         print(f"Round {i}")
         for dictionary in search.programmed_searches:
-                # Redirect sys.stdout to the file
-            output_file = open("output.txt", "a")
+            start_time = time.time()  # Start timer
 
-            sys.stdout = output_file
+
+            # Redirect sys.stdout to the file
+            # output_file = open("output.txt", "a")
+
+            # sys.stdout = output_file
+
+            tracemalloc.start()
+
+            current, peak = tracemalloc.get_traced_memory()
+
+            print(f"Current memory usage: {current / 1024 / 1024:.2f} MB")
+            print(f"Peak memory usage: {peak / 1024 / 1024:.2f} MB")
 
             scrape_for_quick_items(dictionary, i, non_really_sold_items_ids)
 
-            sys.stdout = sys.__stdout__
+            # sys.stdout = sys.__stdout__
 
-            # Close the file
-            output_file.close()
+            # # Close the file
+            # output_file.close()
 
             # After restoring, this will print to the console again
-            print("This will be printed on the console.")
+            # print("This will be printed on the console.")
+
+            tracemalloc.stop()
+            end_time = time.time()  # End timer
+            elapsed_time = end_time - start_time  # Calculate elapsed time
+            times.append(elapsed_time)
+            print(f"Iteration time: {elapsed_time:.2f} seconds")  # Print time taken for this iteration
 
         time.sleep(10)
 
         # time.sleep(3600)
+    print(times)
+
+
 def get_images_forgotten(path):
     df = pd.read_csv(path)
     scraper = Scraper.Scraper()
-    for index, row in df.iterrows():
-        row["Images"] = scraper.get_all_product_images()
+    counter = 0
+    for index, row in df.iloc[330:].iterrows():
+        if row["Images"] == "[]":
+            try:
+                df.at[index, "Images"] = scraper.get_all_product_images(row["Link"])
+            except:
+                pass
+            counter += 1
+            if counter == 100:
+                print("aggiornato csv")
+                df.to_csv(path)
+                break
 
 def get_sold_items_slow(path):
     df = pd.read_csv(path)
 
 def download_all_images(path):
+
     root_folder = "/home/ale/Desktop/Vinted-Web-Scraper/quick_sold_items_images/"
+    already_downloaded = [int(name) for name in os.listdir(root_folder) if os.path.isdir(os.path.join(root_folder, name))]
+
     df = pd.read_csv(path)
+    df = df[df["Images"] != "[]"]
+    df = df[~df["Dataid"].isin(already_downloaded)]
+    print(len(df))
+    counter = 0 
     for index, row in df.iterrows():
         print(f"Index: {index}")
-        for index, image_url in enumerate(row["Images"]):
-            print(f"Image {index + 1}: {image_url}")
-            folder_path = os.path.join(root_folder,str(row["Dataid"]))
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            gen_func.download_image(image_url, os.path.join(folder_path,str(index)))
+        folder_path = os.path.join(root_folder,str(row["Dataid"]))
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        images = ast.literal_eval(row['Images'])
+        # print(f"data id = {type(images)}")
+        for index_2, image_url in enumerate(images):
+            print(f"Image {index_2 + 1}: {image_url}")
+            gen_func.download_image(image_url, os.path.join(folder_path,str(index_2)))
+        counter += 1
+        time.sleep(5)
+        # if counter == 50:
+        #     break
 
 def scrape_for_quick_items(dictionary, i, non_really_sold_items_ids):
     scraper = Scraper.Scraper()
@@ -220,6 +272,9 @@ def scrape_for_quick_items(dictionary, i, non_really_sold_items_ids):
         old_df = new_df.copy()
         old_df.reset_index(drop=True, inplace=True)  # This removes the old index
         old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+        # os.chmod("/home/ale/Desktop/Vinted-Web-Scraper/ /", 0o777)  # Set full read/write/execute permissions for all users
+        # os.system(f"chown -R {getpass.getuser()}:{getpass.getuser()} {'/home/ale/Desktop/Vinted-Web-Scraper/ /'}")
+
         print("first search csv created")
 
 

@@ -24,6 +24,7 @@ import csv
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
+import tracemalloc
 
 import requests
 #scraping browser proxy
@@ -158,7 +159,7 @@ class Scraper:
             print("Response message:", response.text[:20])  # Print the first 500 characters of the response
     
     def fetch_page_and_check(self,item):
-        time.sleep(10)
+        time.sleep(15)
         try:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
             #     return item, False, "AlreadyChecked"
@@ -445,11 +446,20 @@ class Scraper:
                             likes_count = aria_label.split("Aggiunto ai preferiti da ")[1].split(" ")[0] # Adjust based on actual aria-label structure
                             break  # Stop once the correct element is found
 
+
+                #sometimes there is a comma at the end of the price, this code removes it
+                price = components[1][:-1] if components[1].endswith('.') else components[1]
+                price = price.replace(',', '.')
+                price = re.sub(r'[^\d.]', '', price)
+                if price.count('.') > 1:
+                    parts = price.split('.')
+                    price = parts[0] + '.' + ''.join(parts[1:])  # Keeps the first dot only
+
                 
                 # Append the data to the list
                 data.append({
                     "Title": components[0],
-                    "Price": float(re.sub(r'[^\d.]', '', components[1].replace(',', '.'))), #remove non digits caracters and cast it to float
+                    "Price": float(price) if price else 0.0,
                     "Brand": components[2],
                     "Size": components[3],
                     # "Condition": search.condition_dict[dictionary[condition]],
@@ -462,6 +472,7 @@ class Scraper:
                     "SearchCount": search_count,
                     "Images": []
                 })
+                # print(f"data = {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
             
             page += 1
         return data       
@@ -518,7 +529,9 @@ class Scraper:
 
             try:
                 #get location
-                location_element = html_content.find("div.details-list__item-value--redesign[itemprop='location']", first=True)
+                location_element = html_content.find('div.details-list__item-value[itemprop="location"] span', first=True)
+
+                # html_content.find("div.details-list__item-value--redesign[itemprop='location']", first=True)
                 location = location_element.text if location_element else None            
                 # location = self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='location']").text
 
@@ -526,8 +539,9 @@ class Scraper:
                 location = "Unknown"
 
             try:
-                #get views
-                views_count_element = html_content.find("div.details-list__item-value--redesign[itemprop='view_count']", first=True)
+                views_count_element = html_content.find('div.details-list__item-value[itemprop="view_count"] span', first=True)
+
+                # views_count_element = html_content.find("span[class='web_ui__Text__text web_ui__Text__subtitle web_ui__Text__left web_ui__Text__bold']", first=True)
                 views_count = int(views_count_element.text) if views_count_element else None  
                 # views_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='view_count']").text)
             except:
@@ -536,18 +550,19 @@ class Scraper:
             
             #get interested people
             try:
-                interested_count_element = html_content.find("div.details-list__item-value--redesign[itemprop='interested']", first=True)
+                interested_count_element = html_content.find('div.details-list__item-value[itemprop="interested"] span', first=True)
                 interested_count = int(interested_count_element.text.split(" ")[0]) if interested_count_element else None  
                 # interested_count = int(self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='interested']").text.split(" ")[0])
             except:
                 interested_count = -1
 
             try:
-                #get upload date
-                upload_date = " ".join(
-                    html_content.find("div.details-list__item-value--redesign[itemprop='upload_date']", first=True).text.split()[:-1]
-                    # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
-                    )
+                upload_date = html_content.find('div.details-list__item-value[itemprop="upload_date"] span', first=True).text
+                # #get upload date
+                # upload_date = " ".join(
+                #             html_content.find('div.details-list__item-value[itemprop="upload_date"] span', first=True)
+                #     # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
+                #     )
             except:
                 upload_date = "Unknown"
             
@@ -567,12 +582,14 @@ class Scraper:
             #     return [], []
             
             try:
-                item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
-                item_condition = item_condition_element.find("div[class='details-list__item-value--redesign']", first=True).text
+                item_condition = html_content.find('div.details-list__item-value[itemprop="status"] span', first=True).text
+
+                # item_condition_element = html_content.find("div[data-testid='item-attributes-status']", first=True)
+                # item_condition = item_condition_element.find("div[class='details-list__item-value--redesign']", first=True).text
             except:
                 item_condition = "Unknown"
 
-            print(f"condition = {item_condition}")
+            # print(f"condition = {item_condition}")
             new_seller_row = {
                     "SellerId": " ",
                     "SellerName": seller_name,
@@ -603,8 +620,11 @@ class Scraper:
 
             ### get images or not depending on what is set in the bool parameter get_images
             if get_images:
-                print("getting images urls")
-                image_urls = self.get_all_product_images(url)
+                try:
+                    image_urls = self.get_all_product_images(url)
+                except:
+                    print("ERROR GETTING IMAGES")
+                    image_urls = []
             else:
                 image_urls = []
 
@@ -632,21 +652,26 @@ class Scraper:
         #     print("non abbastanza stelle o reviews")
         
     def get_all_product_images(self, url):
+        print(f"url = {url}")
         self.driver = self.init_driver()
 
         gen_func.safe_get(self.driver,url)
 
         #click on one image to open the carousel
-
+        # print("before item thumbnail")
         image_button = self.driver.find_element(By.XPATH, "//button[@class='item-thumbnail']")
         self.driver.execute_script("arguments[0].scrollIntoView(true);", image_button)
         self.driver.execute_script("arguments[0].click();", image_button)
 
         time.sleep(2)
         #get all the images
+        # print("before image carousel")
         image_carousel = self.driver.find_element(By.XPATH, "//div[contains(@class, 'image-carousel__image-wrapper')]")
+        # print("before img")
         images_element = image_carousel.find_elements(By.TAG_NAME, "img")
         image_urls = [img.get_attribute("src") for img in images_element]
+        # print(f"images = {image_urls}")
+        print(f"got images from url {url}")
         return image_urls
 
     def compare_and_save_df_serial(self, new_df, old_df, input_search, non_really_sold_items_ids):
@@ -771,11 +796,14 @@ class Scraper:
         new_seller_rows = []      
         new_quick_sold_rows = []
 
+        tracemalloc.start()
+
+
         print(f"Items to fully scrape: {len(items_to_fully_scrape)}")
         for item in items_to_fully_scrape:
             url = item["Link"]
             data_id = item["Dataid"]
-            new_row, new_seller_row = self.scrape_single_product(url, data_id, get_images=False)
+            new_row, new_seller_row = self.scrape_single_product(url, data_id, get_images=True)
             
             if new_row and new_seller_row["ReviewsCount"] > 3 and float(new_seller_row["Stars"]) > 3.0:
                 print("new row added")
@@ -806,47 +834,53 @@ class Scraper:
                 print("seller not good enough")
                 old_df.loc[old_df["Link"] == url, "MarketStatus"] = "On Sale"
                 non_really_sold_items_ids.add(int(data_id))
+            current, peak = tracemalloc.get_traced_memory()
+            print(f"Current memory usage: {current / 1024 / 1024:.2f} MB")
+            print(f"Peak memory usage: {peak / 1024 / 1024:.2f} MB")
 
-    
-        max_id = seller_df["SellerId"].max()
-        columns_seller = ["SellerId", "SellerName", "Location", "ReviewsCount", "Stars"]
+        if new_quick_sold_rows:
+            max_id = seller_df["SellerId"].max()
+            columns_seller = ["SellerId", "SellerName", "Location", "ReviewsCount", "Stars"]
 
-        temp_seller_df = pd.DataFrame(new_seller_rows, columns=columns_seller)
-        temp_seller_df.drop_duplicates(subset=["SellerName"], keep='first', inplace=True)
+            temp_seller_df = pd.DataFrame(new_seller_rows, columns=columns_seller)
+            temp_seller_df.drop_duplicates(subset=["SellerName"], keep='first', inplace=True)
 
-        #create a temporary df with the new rows
-        columns = ["Images","Interested_count","View_count","Item_description","Condition","Upload_date","Dataid","SellerId","SellerName","Title","Price","Brand","Size","Link","Likes","MarketStatus","SearchDate","Page","SearchCount"]
-        complementary_df = pd.DataFrame(new_quick_sold_rows, columns=columns)
+            #create a temporary df with the new rows
+            columns = ["Images","Interested_count","View_count","Item_description","Condition","Upload_date","Dataid","SellerId","SellerName","Title","Price","Brand","Size","Link","Likes","MarketStatus","SearchDate","Page","SearchCount"]
+            complementary_df = pd.DataFrame(new_quick_sold_rows, columns=columns)
 
-        for index, row in complementary_df.iterrows():  
-            if row["SellerName"] in seller_df["SellerName"].values:
-                seller_id = seller_df.loc[seller_df["SellerName"] == row["SellerName"], "SellerId"].values[0]
-                complementary_df.at[index, "SellerId"] = seller_id  # Modify directly in DataFrame
-                temp_seller_df.drop(temp_seller_df[temp_seller_df["SellerName"] == row["SellerName"]].index, inplace=True)
-            else:
-                max_id += 1
-                complementary_df.at[index, "SellerId"] = max_id  # Modify directly in DataFrame
-                temp_seller_df.loc[temp_seller_df["SellerName"] == row["SellerName"], "SellerId"] = max_id
+            for index, row in complementary_df.iterrows():  
+                current, peak = tracemalloc.get_traced_memory()
+                print(f"Current memory usage: {current / 1024 / 1024:.2f} MB")
+                print(f"Peak memory usage: {peak / 1024 / 1024:.2f} MB")
+                if row["SellerName"] in seller_df["SellerName"].values:
+                    seller_id = seller_df.loc[seller_df["SellerName"] == row["SellerName"], "SellerId"].values[0]
+                    complementary_df.at[index, "SellerId"] = seller_id  # Modify directly in DataFrame
+                    temp_seller_df.drop(temp_seller_df[temp_seller_df["SellerName"] == row["SellerName"]].index, inplace=True)
+                else:
+                    max_id += 1
+                    complementary_df.at[index, "SellerId"] = max_id  # Modify directly in DataFrame
+                    temp_seller_df.loc[temp_seller_df["SellerName"] == row["SellerName"], "SellerId"] = max_id
 
-    #maybe this row can be removed
-    # df.reset_index(drop=True, inplace=True)  # This removes the old index
+        #maybe this row can be removed
+        # df.reset_index(drop=True, inplace=True)  # This removes the old index
 
-    #add the temporary df with the new rows to the original df
-    # new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
-    # new_df.to_csv(f"{dictionary['search']}/{dictionary['search']}.csv", index=False)
-    
-    
-        new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)
-        new_seller_df.to_csv(f"Sellers.csv", index=False)            
+        #add the temporary df with the new rows to the original df
+        # new_df = df.set_index('Dataid').combine_first(complementary_df.set_index('Dataid')).reset_index()
+        # new_df.to_csv(f"{dictionary['search']}/{dictionary['search']}.csv", index=False)
         
-        quick_sold_items_df = pd.concat([quick_sold_items_df, complementary_df], ignore_index=True)
-        quick_sold_items_df.to_csv(f"quick_sold_items_scarpe_donna.csv", index=False)
         
-        print("Temp seller df:")
-        print(temp_seller_df)
+            new_seller_df = pd.concat([seller_df, temp_seller_df], ignore_index=True)
+            new_seller_df.to_csv(f"Sellers.csv", index=False)            
+            
+            quick_sold_items_df = pd.concat([quick_sold_items_df, complementary_df], ignore_index=True)
+            quick_sold_items_df.to_csv(f"quick_sold_items_scarpe_donna.csv", index=False)
+            
+            print("Temp seller df:")
+            print(temp_seller_df)
 
-        print("Quick sold items df:")
-        print(quick_sold_items_df)
+            print("Quick sold items df:")
+            print(quick_sold_items_df)
 
 
         
@@ -857,10 +891,17 @@ class Scraper:
 
         # Save new items
         if len(new_df) > 0:
-            print("concateno il nuovo dataset")
+            current, peak = tracemalloc.get_traced_memory()
+            print("concateno il nuovo dataset") 
+
+            print(f"Current memory usage: {current / 1024 / 1024:.2f} MB")
+            print(f"Peak memory usage: {peak / 1024 / 1024:.2f} MB")
+            print(f"len new_df = {len(new_df)}")
             old_df = pd.concat([old_df, new_df], ignore_index=True)
             old_df = old_df.drop_duplicates(subset=["Link"], keep='first', inplace=False)
             old_df.to_csv(f"{input_search}/{input_search}.csv", index=False)
+            print("finito di concatenare")
+            tracemalloc.stop()
 
             # notif.sendMessage(f"Nuova Ricerca: {input_search}, {len(new_items)} Nuovi Items")
 

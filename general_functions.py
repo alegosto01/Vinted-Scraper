@@ -5,6 +5,7 @@ import time
 import requests
 from selenium.common.exceptions import WebDriverException
 import pandas as pd
+import re
 
 def empty_excel(path):
     wb = load_workbook(path)
@@ -61,10 +62,27 @@ def split_data(entry):
     title, details = entry.split(',', 1)
 
     # Extract individual components from details
-#3
-    price = details.split('prezzo:')[1].split('€')[0].strip() + '€'  # Extract price #you can have other value so you probalby have to change zl to value that is in your country
-    brand = details.split('brand:')[1].split(',')[0].strip()  # Extract brand
-    size = details.split('taglia:')[1].strip()  # Extract size
+
+    #   old way to get the price but they changed the html 
+
+    # price = details.split('prezzo:')[1].split('€')[0].strip() + '€'  # Extract price #you can have other value so you probalby have to change zl to value that is in your country
+# Scarpe, brand: Nike, condizioni: Nuovo con cartellino, taglia: 45, €110.00, €116.20 include la Protezione acquisti
+
+    # print(f"DETAILS: {details}")
+    split = details.split("€")
+    if len(split) == 3:
+        price = split[2].split('include la Protezione acquisti')[0]
+    else:
+        price = split[1]
+
+    if "brand:" in details:
+        brand = details.split('brand:')[1].split(',')[0].strip()  # Extract brand
+    else:
+        brand = "No brand"
+    if "taglia:" in details:
+        size = details.split('taglia:')[1].split(",")[0].strip()  # Extract size
+    else:
+        size = 0
     return title.strip(), price, brand, size
 
 
@@ -85,7 +103,6 @@ def load_page(driver, webpage, page):
                 raise e  # Raise the exception after max retries
 
 
-import time
 
 def safe_get(driver, url, retries=3, delay=15):
     for attempt in range(retries):
