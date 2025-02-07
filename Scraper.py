@@ -158,15 +158,26 @@ class Scraper:
             print("Failed to retrieve the page:", response.status_code)
             print("Response message:", response.text[:20])  # Print the first 500 characters of the response
     
-    def fetch_page_and_check(self,item):
-        time.sleep(15)
+    def fetch_page_and_check(self,item, get_images = True):
+        # time.sleep(15)
         try:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
             #     return item, False, "AlreadyChecked"
             url = item["Link"]
             html_content = self.get_page_content(url, timeout=60, sleep=30)
 
+
+
             if html_content:
+                if get_images:
+                    print("get images")
+                    try:
+                        images_links_element = html_content.find('div[class="item-photos"]', first= True)
+                        images_links = [img.attrs["src"] for img in images_links_element.find("img") if "src" in img.attrs]
+
+                        item["Images"] = images_links
+                    except:
+                        print("problemaaaa")
                 element = html_content.find('div[data-testid="item-status--content"]', first=True)
                 if element and element.text == "Venduto":
                     return item, True, "Sold"
@@ -424,6 +435,7 @@ class Scraper:
                 title = gen_func.remove_illegal_characters(product.attrs.get("title"))
                 components = gen_func.split_data(title)
                 link = product.attrs.get("href")
+                image_link = product.attrs.get("src")
                 if "referrer=catalog" not in link:
                     continue
                 data_id = product.attrs.get("data-testid", "").split("-")
@@ -470,7 +482,7 @@ class Scraper:
                     "SearchDate": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     "Page": page+1,
                     "SearchCount": search_count,
-                    "Images": []
+                    "Images": [image_link]
                 })
                 # print(f"data = {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
             
