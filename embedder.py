@@ -9,6 +9,9 @@ model_name = "roberta-base"
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 model = AutoModel.from_pretrained("bert-base-uncased")
 
+tokenizer.decode(clean_up_tokenization_spaces=True)
+
+
 # Functions
 def get_embedding(sentence):
     inputs = tokenizer(sentence, return_tensors="pt", padding=True, truncation=True)
