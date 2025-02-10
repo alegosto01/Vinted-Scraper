@@ -62,7 +62,7 @@ def check_if_item_got_sold(csv_path, chunk_size, get_images = False):
     # print("Parallel scraping complete.")
 
 
-for i in range (10):
+for i in range (5):
     start_time = time.time()  # Start timer
     check_if_item_got_sold("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv.csv", 1000, get_images=True)
     end_time = time.time()  # End timer
