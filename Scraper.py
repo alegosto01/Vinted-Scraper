@@ -159,7 +159,7 @@ class Scraper:
             print("Response message:", response.text[:20])  # Print the first 500 characters of the response
     
     def fetch_page_and_check(self,item, get_images = True):
-        # time.sleep(15)
+        time.sleep(15)
         try:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
             #     return item, False, "AlreadyChecked"
@@ -170,7 +170,6 @@ class Scraper:
 
             if html_content:
                 if get_images:
-                    print("get images")
                     try:
                         images_links_element = html_content.find('div[class="item-photos"]', first= True)
                         images_links = [img.attrs["src"] for img in images_links_element.find("img") if "src" in img.attrs]
