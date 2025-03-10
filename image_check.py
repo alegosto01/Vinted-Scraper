@@ -28,6 +28,8 @@ def check_item(true_option, wrong_option, image):
     return probs[0].detach().numpy()
 
 
+
+
 def calculate_blur(image_path):
     # Check if the file exists
     if not os.path.exists(image_path):

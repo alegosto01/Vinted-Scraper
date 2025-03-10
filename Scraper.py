@@ -158,7 +158,7 @@ class Scraper:
             print("Failed to retrieve the page:", response.status_code)
             print("Response message:", response.text[:20])  # Print the first 500 characters of the response
     
-    def fetch_page_and_check(self,item, get_images = True):
+    def fetch_page_and_check(self,item, get_images = False, check_venduto = False, get_upload_date = False):
         time.sleep(15)
         try:
             # if int(item["Dataid"]) in non_really_sold_items_ids:
@@ -166,9 +166,8 @@ class Scraper:
             url = item["Link"]
             html_content = self.get_page_content(url, timeout=60, sleep=30)
 
-
-
             if html_content:
+                # get images solo per recuperare i links delle foto
                 if get_images:
                     try:
                         images_links_element = html_content.find('div[class="item-photos"]', first= True)
@@ -177,9 +176,21 @@ class Scraper:
                         item["Images"] = images_links
                     except:
                         print("problemaaaa")
-                element = html_content.find('div[data-testid="item-status--content"]', first=True)
-                if element and element.text == "Venduto":
-                    return item, True, "Sold"
+                if check_venduto:
+                    element = html_content.find('div[data-testid="item-status--content"]', first=True)
+                    if element and element.text == "Venduto":
+                        return item, True, "Sold"
+                if get_upload_date:
+                    try:
+                        item["Upload_date"] = html_content.find('div.details-list__item-value[itemprop="upload_date"] span', first=True).text
+                        # #get upload date
+                        # upload_date = " ".join(
+                        #             html_content.find('div.details-list__item-value[itemprop="upload_date"] span', first=True)
+                        #     # self.driver.find_element(By.XPATH, "//div[@class='details-list__item-value' and @itemprop='upload_date']").text.split()[:-1]
+                        #     )
+                    except:
+                        item["Upload_date"] = "Unknown"
+                        print(f"item = {item['Dataid']} PROBLEMA UPLOAD DATE!!")
             # time.sleep(5)
             return item, False, "On Sale"
         except Exception:
