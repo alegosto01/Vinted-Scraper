@@ -49,12 +49,20 @@ def random_sleep(range_from, range_to):
 
 
 def download_image(image_url, path):
-    response = requests.get(image_url)
-    if not os.path.exists(path):
-        with open(path, 'wb') as file:
-            file.write(response.content)
-    else:
-        print("non scarico immagine esiste già")
+    return_value = True
+    try:
+        response = requests.get(image_url)
+        if not os.path.exists(path):
+            with open(path, 'wb') as file:
+                file.write(response.content)
+        else:
+            print("non scarico immagine esiste già")
+    except Exception as e:
+        print(f"raised exception {e}")
+        return_value = False
+    return return_value
+
+
 
    
 def split_data(entry):

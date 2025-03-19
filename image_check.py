@@ -5,6 +5,7 @@ import os
 import cv2
 import numpy as np
 from scipy.stats import skew, kurtosis
+from pathlib import Path
 
 
 
@@ -46,11 +47,10 @@ def calculate_blur(image_path):
 
     # Calculate the Laplacian and its variance
     laplacian_var = cv2.Laplacian(image, cv2.CV_64F).var()
-    print(f"Laplacian variance: {laplacian_var}")
+    # print(f"Laplacian variance: {laplacian_var}")
     return float(laplacian_var)
 
 def calculate_images_blur_stats(folder_path):
-    from pathlib import Path
 
     def get_file_paths(folder_path):
         """
@@ -60,9 +60,11 @@ def calculate_images_blur_stats(folder_path):
 
     files = get_file_paths(folder_path)
     # files = [f"{image}.jpg" for image in files]
-    print(files)
+    # print(files)
     lap_vars = [calculate_blur(image) for image in files]
     lap_vars = [value for value in lap_vars if value is not None]
+
+    images_count = len(lap_vars)
 
     if not lap_vars:
         print("No valid images found.")
@@ -75,14 +77,15 @@ def calculate_images_blur_stats(folder_path):
         "Minimum": np.min(lap_vars),
         "Maximum": np.max(lap_vars),
         "Skewness": skew(lap_vars),
-        "Kurtosis": kurtosis(lap_vars)
+        "Kurtosis": kurtosis(lap_vars),
+        "ImageCount": images_count   
     }
 
-    print(statistics)
+    # print(statistics)
     return statistics
 
 
-# calculate_images_blur_stats("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/")
+# calculate_images_blur_stats("/home/ale/Desktop/Vinted-Web-Scraper/sold_items_images/2392933700")
 
 # for image in os.listdir("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche images"):
 #     file_path = os.path.join("/home/ale/Desktop/Vinted-Web-Scraper/air force 1 bianche/air force 1 bianche images/", image)

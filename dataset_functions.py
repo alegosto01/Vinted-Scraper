@@ -7,8 +7,42 @@ import time
 import json
 import os
 import ast
-
+import shutil
 import general_functions as gen_func
+
+
+
+
+
+def fix_protezione_acquisti_in_size(value):
+    if "Protezione" in str(value):
+        try:
+            return float(str(value).split(",")[0])
+        except:
+            print(value)
+    elif any(word in str(value).lower() for word in ("altro", "taglia unica")):
+        return 0.0
+    else:
+        try:
+            return float(value)
+        except:
+            print(value)
+#sometimes the prices are written like 1555 instead of 15.55. the functions adjusts them
+def adjust_price_without_decimals(csv_path):
+    df = pd.read_csv(csv_path)
+    df_to_change = df.loc[df["Size"] == "0"].index
+    print(len(df_to_change))
+    def replace_float_with_int(value):
+        to_remove_list = []
+        try:
+            value = str(value)
+            return value if "." in value else value[:-2] + "." + value[-2:]
+        except:
+            print(f"It wasn't possible to adjust the value {value}")
+            print(type(value))
+
+    df.loc[df_to_change, "Price"] = df.loc[df_to_change, "Price"].apply(replace_float_with_int)
+    df.to_csv(csv_path, index=False)
 def check_item_from_csv(csv_path, chunk_size, get_images = True, check_venduto = False, get_upload_date = False):
 
     df_to_check = pd.read_csv(csv_path)
@@ -16,8 +50,9 @@ def check_item_from_csv(csv_path, chunk_size, get_images = True, check_venduto =
     if check_venduto:
         df_to_check_iter = df_to_check[df_to_check["LastCheck"].isnull()]
     elif get_images:
-        # df_to_check_iter = df_to_check[df_to_check["Images"] == "[]"]
-        df_to_check_iter = df_to_check[df_to_check["Images"].isnull()]
+        df_to_check_iter = df_to_check[df_to_check["Images"] == "[]"]
+        df_to_check_iter = df_to_check[df_to_check["Images"] == '"[]"']
+        # df_to_check_iter = df_to_check[df_to_check["Images"].isnull()]
 
     print(f"len = {len(df_to_check_iter)}")
 
@@ -70,46 +105,81 @@ def check_item_from_csv(csv_path, chunk_size, get_images = True, check_venduto =
         df_to_check.to_csv(csv_path, index=False)
 
 
-######SISTEMA GIU download_images_from_csv ########
+def download_images_from_csv(csv_path, destination_folder, iterations, chunk = 620):
+    def safe_eval(val):                                # Convert string to a list, or return 
+                                                        # an empty list if conversion fails
+            try:
+                return ast.literal_eval(val) if isinstance(val, str) and val.startswith("[") else val
+            except (SyntaxError, ValueError):
+                print("Error")
+                return val
+            
 
-def download_images_from_csv(csv_path, root_folder, iterations, chunk = 400):
+    if not os.path.exists(destination_folder):         # Create the destination folder if it doesn't exist          
+        os.makedirs(destination_folder)
+
+    df = pd.read_csv(csv_path)
+    df["Images"] = df["Images"].apply(safe_eval)        # Convert the string in a list of images
+    df.to_csv(csv_path, index=False)
+
     for i in range(iterations):
-        df = pd.read_csv(csv_path)
-        df = df.loc[df["Downloaded"] != "Yes"]
+        if "Downloaded" not in df.columns:
+            df["Downloaded"] = False
 
         if len(df) == 0:
             break
+        df_iter = df[df["Downloaded"] == False]
+        df_iter = df_iter.iloc[:chunk]
 
-        df_iter = df.iloc[:chunk]
-        print(len(df_iter))
-        # df_iter = df_iter.iloc[:50]
         downloaded_dataids = []
-        df_iter['Images'] = df_iter['Images'].apply(ast.literal_eval)
+      
 
-        for index, row in df_iter.iterrows():
-            print(f"{row['Dataid']}")
-            if row["Images"] != "" and row["Images"]:
+        for index, row in df_iter.iterrows():               # Loop through the df and get the images
+                                                            # checking if the row has the images links list
+            dataid = int(row["Dataid"])                     # Save dataid of the item
+            if row["Images"] != "" and row["Images"]:        
                 image_urls = row["Images"]
             else:
-                break
-            image_folder_path = os.path.join(root_folder,str(row["Dataid"]))
-            if not os.path.exists(image_folder_path):
-                os.makedirs(image_folder_path)
-            for index_img, image_url in enumerate(image_urls):
-            # image_url = image.get_attribute("src")
-                print(f"Image {index_img + 1}: {image_url}")
-                # print("path exists i wont created it")
-                gen_func.download_image(image_url,os.path.join(image_folder_path, str(index_img)))
-            downloaded_dataids.append(int(row["Dataid"]))
-            
-        #set the downloaded images to yes so thta i don't download them anymore
-        df.loc[df["Dataid"].isin(downloaded_dataids), "Downloaded"] = "Yes"
+                image_urls = []
+
+            downloaded_bool = True
+            if len(image_urls) > 0:                         # If the row has the images start download them
+                for index_img, image_url in enumerate(image_urls):      # Loop through all the images and download them in the 
+                    print(f"Image {index_img + 1}: {image_url}")
+                    success = gen_func.download_image(image_url,os.path.join(destination_folder, str(index_img)))
+                    if not success:
+                        print(f"Problems downloading the following image = {image_url}")
+                        downloaded_bool = False
+                if downloaded_bool:
+                    downloaded_dataids.append(int(dataid))
+                else:
+                    print("Not all images or none of them were downloaded")
+                df.loc[df["Dataid"].isin(downloaded_dataids), "Downloaded"] = True
         df.to_csv(csv_path, index=False)
 
 
+
+
+
+
+
+
+# csv_path = "/home/ale/Desktop/Vinted-Web-Scraper/sold_items_buono.csv"
+# df = pd.read_csv(csv_path)
+
+# df["Size"] = df["Size"].apply(fix_protezione_acquisti_in_size)
+# # print(len(df_filtered))
+
+# # df = df[~df["Link"].isin(df_size_zero["Link"])]
+
+
+# df.to_csv("/home/ale/Desktop/Vinted-Web-Scraper/sold_items.csv")
+
+
+# df_to_check_iter = df_to_check[df_to_check["Images"].isnull()]
 # provare a prendere gli ultimi link delle foto in big_csv controllando [] che sono null e "[]"
 
-# for i in range (1):
+# for i in range (139):
 #     start_time = time.time()  # Start timer
 #     check_item_from_csv("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv.csv", 100, get_images=True, check_venduto=False, get_upload_date=False)
 #     end_time = time.time()  # End timer
@@ -126,7 +196,6 @@ def download_images_from_csv(csv_path, root_folder, iterations, chunk = 400):
 
 # print(folders[:5])
 
-# df = pd.read_csv("/home/ale/Desktop/Vinted-Web-Scraper/sold_items_copy_28_02_2025.csv")
 
 # print(len(df))
 
@@ -151,8 +220,29 @@ def download_images_from_csv(csv_path, root_folder, iterations, chunk = 400):
 # print(f"len folders {len(folders)}")
 
 
-download_images_from_csv("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv.csv","/home/ale/Desktop/Vinted-Web-Scraper/big_csv_images/", iterations=100)
+# download_images_from_csv("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv_prova_merge.csv","/home/ale/Desktop/Vinted-Web-Scraper/big_csv_images/", iterations=1)
 
 
+parent_dir = "/home/ale/Desktop/Vinted-Web-Scraper/big_csv_images/"
 
+# List all items in the directory
+for folder_name in os.listdir(parent_dir):
+    folder_path = os.path.join(parent_dir, folder_name)
+    
+    # Check if it's a directory and ends with '.0'
+    if os.path.isdir(folder_path) and folder_name.endswith(".0"):
+        print(f"Deleting folder: {folder_path}")
+        shutil.rmtree(folder_path)  # Delete the folder and its contents
+
+print("✅ Deletion complete.")
+
+
+# df2 = pd.read_csv("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big csv full last check.csv")
+
+
+# df1 = df1.merge(df2[["Title", "Price", "Brand", "Dataid"]], 
+#                 on=["Title", "Price", "Brand"], 
+#                 how="left")
+
+# df1.to_csv("/home/ale/Desktop/Vinted-Web-Scraper/big_csv/big_csv_prova_merge.csv", index=False)
 

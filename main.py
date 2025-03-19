@@ -352,3 +352,30 @@ if __name__ == '__main__':
 #     finally:
 #         driver.quit()
 #         print("Browser closed.")
+
+
+
+
+
+
+
+
+
+# for index, row in df_iter.iterrows():
+#             if row["Images"] != "" and row["Images"]:
+#                 image_urls = row["Images"]
+#                 print("good")
+#             else:
+#                 image_urls = []
+#                 print("bad")
+#                 break
+#             if len(image_urls) > 0:
+#             image_folder_path = os.path.join(root_folder,str(row["Dataid"]))
+#             if not os.path.exists(image_folder_path):
+#                 os.makedirs(image_folder_path)
+#             for index_img, image_url in enumerate(image_urls):
+#             image_url = image.get_attribute("src")
+#                 print(f"Image {index_img + 1}: {image_url}")
+#                 print("path exists i wont created it")
+#                 gen_func.download_image(image_url,os.path.join(image_folder_path, str(index_img)))
+#             downloaded_dataids.append(int(row["Dataid"]))
