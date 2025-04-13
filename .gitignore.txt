@@ -1,6 +1,0 @@
-*
-
-# But not these directories
-!scripts/
-!csv/
-!csv_definitivi/
