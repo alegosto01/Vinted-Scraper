@@ -1,0 +1,8 @@
+# Ignore everything
+*/
+
+
+# But not these directories
+!csv/
+!scripts/
+!csv_definitivi/
